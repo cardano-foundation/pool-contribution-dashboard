@@ -2,6 +2,17 @@ import axios, { AxiosResponse } from "axios";
 
 import {EpochParams, PoolHistory, DelegatorStake, TokenomicStats, PoolOwnerHistory} from "@/types/types"; 
 
+//Used to load epoch delegator data from the local express storage and not from KOIOS
+export async function fetchDelegatorStakeLocal(params : EpochParams) : Promise<DelegatorStake[]> {
+  try {
+    const responseDelegatorStakeLocal = await axios.get<DelegatorStake[]>(`${process.env.NEXT_PUBLIC_API_URL}/local/${params.epoch}`)
+    return responseDelegatorStakeLocal.data;
+  } catch (error) {
+    console.error("API Error:", error);
+    return []
+  }
+}
+
 //Get pool history for calculating member rewards with the pool rewards
 export async function fetchPoolHistory(params : EpochParams) : Promise<PoolHistory[]> {
   try {

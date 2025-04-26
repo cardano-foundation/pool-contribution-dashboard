@@ -1,5 +1,8 @@
 const express = require("express");
+const axios = require('axios');
 const cors = require("cors");
+const fs = require('fs');
+const path = require('path');
 
 const httpProxyMiddleware = require("http-proxy-middleware");
 
@@ -36,6 +39,53 @@ const proxyMiddleware = httpProxyMiddleware.createProxyMiddleware({
 
 app.use('/api', proxyMiddleware);
 
+//Used to load stake data from local storage
+app.get('/local/:epochNo', async (req, res) => {
+  //Upper margin is still hard coded!
+  console.log("Got request with: " + req.params.epochNo);
+  console.log(req.params.epochNo + " vs. " + process.env.LOWEST_EPOCH + " vs. " + "555");
+  if (req.params.epochNo >= process.env.LOWEST_EPOCH && req.params.epochNo <= 555) {
+    let dir = path.join(__dirname, 'stake_data', `epoch_${req.params.epochNo}.json`);
+    const fileContent = await fs.promises.readFile(dir, 'utf-8', (err, data) => {
+      if (err) {
+        console.error('Error reading file:', err);
+        return;
+      }
+    });
+    const data = JSON.parse(fileContent);
+    res.send(data);
+    console.log("Epoch " + req.params.epochNo + " sent.");
+  } else {
+    res.send([]);
+    console.log("Epoch " + req.params.epochNo + " is not in bounds.");
+  }
+});
+
+//Allows the express server to fetch data from koios and saves it in local storage to minimize api calls
+//This is not yet final since anyone can just downlaod stuff to the server
+app.get('/fetch-epoch/:epochNo', async (req, res) => {
+  const { epochNo } = req.params;
+  const response = await axios.get(`http://localhost:${PORT}/api/v1/pool_delegators_history?_pool_bech32=${process.env.POOL}&_epoch_no=${epochNo}`);
+  if (response.data) {
+    saveToJSON(response.data, i);
+    //res.json({ message: `Epoch ${i} gespeichert.` });
+  } else {
+    res.status(500).json({ error: 'Fehler beim Abrufen der Daten.' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
+
+//Lets the server save the KOIOS data locally as JSON
+function saveToJSON(data, epochNo) {
+  let dir = path.join(__dirname, 'stake_data');
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+  const filename = `epoch_${epochNo}.json`;
+  dir = path.join(dir, filename);
+  fs.writeFileSync(dir, JSON.stringify(data, null, 2));
+  console.log(`Epoch ${epochNo} gespeichert als ${filename}`);
+}
