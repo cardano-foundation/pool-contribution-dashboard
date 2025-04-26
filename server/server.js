@@ -40,7 +40,7 @@ const proxyMiddleware = httpProxyMiddleware.createProxyMiddleware({
 app.use('/api', proxyMiddleware);
 
 //Used to load stake data from local storage
-app.get('/local/:epochNo', async (req, res) => {
+app.get('/local-delegator-stake/:epochNo', async (req, res) => {
   //Upper margin is still hard coded!
   console.log("Got request with: " + req.params.epochNo);
   console.log(req.params.epochNo + " vs. " + process.env.LOWEST_EPOCH + " vs. " + "555");
@@ -61,26 +61,63 @@ app.get('/local/:epochNo', async (req, res) => {
   }
 });
 
+app.get('/local-pool-history/:epochNo', async (req, res) => {
+  if (req.params.epochNo >= process.env.LOWEST_EPOCH && req.params.epochNo <= 555) {
+    let dir = path.join(__dirname, 'pool_history_data', `epoch_${req.params.epochNo}.json`);
+    const fileContent = await fs.promises.readFile(dir, 'utf-8', (err, data) => {
+      if (err) {
+        console.error('Error reading file:', err);
+        return;
+      }
+    });
+    const data = JSON.parse(fileContent);
+    res.send(data);
+    console.log("Epoch " + req.params.epochNo + " sent.");
+  } else {
+    res.send([]);
+    console.log("Epoch " + req.params.epochNo + " is not in bounds.");
+  }
+})
+
 //Allows the express server to fetch data from koios and saves it in local storage to minimize api calls
 //This is not yet final since anyone can just downlaod stuff to the server
-app.get('/fetch-epoch/:epochNo', async (req, res) => {
+app.get('/fetch-delegator-stake/:epochNo', async (req, res) => {
   const { epochNo } = req.params;
   const response = await axios.get(`http://localhost:${PORT}/api/v1/pool_delegators_history?_pool_bech32=${process.env.POOL}&_epoch_no=${epochNo}`);
   if (response.data) {
-    saveToJSON(response.data, i);
+    saveToJSON(response.data, epochNo, 'stake_data');
     //res.json({ message: `Epoch ${i} gespeichert.` });
   } else {
     res.status(500).json({ error: 'Fehler beim Abrufen der Daten.' });
   }
 });
 
+//Allows to download a specific epochs pool history
+app.get('/fetch-pool-history/:epochNo', async (req, res) => {
+  const { epochNo } = req.params;
+  const response = await axios.get(`http://localhost:${PORT}/api/v1/pool_history?_pool_bech32=${process.env.POOL}&_epoch_no=${epochNo}`);
+  if (response.data) {
+    saveToJSON(response.data, epochNo, 'pool_history_data');
+    //res.json({ message: `Epoch ${i} gespeichert.` });
+  } else {
+    res.status(500).json({ error: 'Fehler beim Abrufen der Daten.' });
+  }
+})
+
+//Allows to download all epochs at once
+app.get('/download-all', async (req, res) => {
+  for (let i = process.env.LOWEST_EPOCH; i <= 555; i++){
+    let data = axios.get(`http://localhost:${PORT}/fetch-delegator-stake/${i}`);
+  }
+})
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
 
 //Lets the server save the KOIOS data locally as JSON
-function saveToJSON(data, epochNo) {
-  let dir = path.join(__dirname, 'stake_data');
+function saveToJSON(data, epochNo, folder) {
+  let dir = path.join(__dirname, folder);
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }

@@ -5,7 +5,7 @@ import {EpochParams, PoolHistory, DelegatorStake, TokenomicStats, PoolOwnerHisto
 //Used to load epoch delegator data from the local express storage and not from KOIOS
 export async function fetchDelegatorStakeLocal(params : EpochParams) : Promise<DelegatorStake[]> {
   try {
-    const responseDelegatorStakeLocal = await axios.get<DelegatorStake[]>(`${process.env.NEXT_PUBLIC_API_URL}/local/${params.epoch}`)
+    const responseDelegatorStakeLocal = await axios.get<DelegatorStake[]>(`${process.env.NEXT_PUBLIC_API_URL}/local-delegator-stake/${params.epoch}`)
     return responseDelegatorStakeLocal.data;
   } catch (error) {
     console.error("API Error:", error);
@@ -17,6 +17,16 @@ export async function fetchDelegatorStakeLocal(params : EpochParams) : Promise<D
 export async function fetchPoolHistory(params : EpochParams) : Promise<PoolHistory[]> {
   try {
     const responsePoolHistory = await axios.get<PoolHistory[]>(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/pool_history?_pool_bech32=${params.poolId}&_epoch_no=${params.epoch}`)
+    return responsePoolHistory.data;
+  } catch (error) {
+    console.error("API Error:", error);
+    return [];
+  }
+}
+
+export async function fetchPoolHistoryLocal(params : EpochParams) : Promise<PoolHistory[]> {
+  try {
+    const responsePoolHistory = await axios.get<PoolHistory[]>(`${process.env.NEXT_PUBLIC_API_URL}/local-pool-history/${params.epoch}`)
     return responsePoolHistory.data;
   } catch (error) {
     console.error("API Error:", error);

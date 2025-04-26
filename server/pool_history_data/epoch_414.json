@@ -1,0 +1,16 @@
+[
+  {
+    "epoch_no": 414,
+    "active_stake": "4318377197829",
+    "active_stake_pct": 0.019369223840455998,
+    "saturation_pct": 6.03,
+    "block_cnt": 7,
+    "delegator_cnt": 108,
+    "margin": 1,
+    "fixed_cost": "340000000",
+    "pool_fees": "3428642537",
+    "deleg_rewards": "0",
+    "member_rewards": null,
+    "epoch_ros": 0
+  }
+]
