@@ -1,98 +1,96 @@
 import axios, { AxiosResponse } from "axios";
 
-import {EpochParams, PoolHistory, DelegatorStake, TokenomicStats, PoolOwnerHistory} from "@/types/types"; 
+import {ExchangeValue, CachedData, RewardDataArray, PoolHistory} from "@/types/types"; 
 
-//Used to load epoch delegator data from the local express storage and not from KOIOS
-export async function fetchDelegatorStakeLocal(params : EpochParams) : Promise<DelegatorStake[]> {
+//In here you should be able to fetch the whole reward data list for all epochs and also use filtering functions in the app.
+
+export async function fetchRewardDataForAllEpochs() : Promise<RewardDataArray> {
   try {
-    const responseDelegatorStakeLocal = await axios.get<DelegatorStake[]>(`${process.env.NEXT_PUBLIC_API_URL}/local-delegator-stake/${params.epoch}`)
-    return responseDelegatorStakeLocal.data;
-  } catch (error) {
-    console.error("API Error:", error);
-    return []
-  }
-}
 
-//Get pool history for calculating member rewards with the pool rewards
-export async function fetchPoolHistory(params : EpochParams) : Promise<PoolHistory[]> {
-  try {
-    const responsePoolHistory = await axios.get<PoolHistory[]>(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/pool_history?_pool_bech32=${params.poolId}&_epoch_no=${params.epoch}`)
-    return responsePoolHistory.data;
-  } catch (error) {
-    console.error("API Error:", error);
-    return [];
-  }
-}
+    if (!process.env.NEXT_PUBLIC_LOCAL_STORAGE_KEY) {
+      throw new Error ("No value is defined for naming the local storage in .env!")
+    }
 
-export async function fetchPoolHistoryLocal(params : EpochParams) : Promise<PoolHistory[]> {
-  try {
-    const responsePoolHistory = await axios.get<PoolHistory[]>(`${process.env.NEXT_PUBLIC_API_URL}/local-pool-history/${params.epoch}`)
-    return responsePoolHistory.data;
-  } catch (error) {
-    console.error("API Error:", error);
-    return [];
-  }
-}
+    //Fetch epoch to check if localStorage is up to date
+    const currentEpoch = (await axios.get<string>(`${process.env.NEXT_PUBLIC_API_URL}/api/get-current-epoch`)).data
 
-//Get delegator stake for calculcating the delegator rewards with their stake
-export async function fetchDelegatorStake(params : EpochParams) : Promise<DelegatorStake[]> {
+    console.log(currentEpoch)
 
-  const allDelegators: DelegatorStake[] = [];
-  const limit = 1000;
-  let offset = 0;
+    //Try to load the reward data from local storage
+    //const storedRewardData: string | null = localStorage.getItem(process.env.NEXT_PUBLIC_LOCAL_STORAGE_KEY)
+    const storedRewardData: string | null = null
 
-  try {
-    //Has to be fetched on blocks of 1000 entries
-    while(true) {
-      const responseDelegatorStake = await axios.get<DelegatorStake[]>(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/pool_delegators_history?_pool_bech32=${params.poolId}&_epoch_no=${params.epoch}&offset=${offset}&limit=${limit}`);
-      const chunk = responseDelegatorStake.data;
+    //TODO!! Something goes wrong here
+    console.log(typeof storedRewardData)
 
-      if (chunk.length === 0) {
-        break;
+    //If not found, fetch new
+    if (storedRewardData === null) {
+
+      const rewardDataArray = (await axios.get<RewardDataArray>(`${process.env.NEXT_PUBLIC_API_URL}/api/fetch-rewards`)).data
+
+      console.log(rewardDataArray)
+
+      const toStore: CachedData = {
+        epoch: currentEpoch,
+        payload: rewardDataArray
       }
 
-      allDelegators.push(...chunk);
-      offset += limit;
+      //And save it 
+      localStorage.setItem(process.env.NEXT_PUBLIC_LOCAL_STORAGE_KEY, JSON.stringify(toStore))
+
+      return rewardDataArray
+
+    } else {
+
+      let recievedRewardData: CachedData = JSON.parse(storedRewardData) as CachedData
+
+      console.log(recievedRewardData.epoch)
+      console.log(recievedRewardData.payload)
+
+      //If local data is not up to date anymore fetch new
+      if (recievedRewardData.epoch !== currentEpoch) {
+
+        const rewardDataArray = (await axios.get<RewardDataArray>(`${process.env.NEXT_PUBLIC_API_URL}/api/fetch-rewards`)).data
+        const toStore: CachedData = {
+          epoch: currentEpoch,
+          payload: rewardDataArray
+        }
+
+        //And overwrite the old 
+        localStorage.setItem(process.env.NEXT_PUBLIC_LOCAL_STORAGE_KEY, JSON.stringify(toStore))
+
+        return rewardDataArray
+
+      //If the data is up to date
+      } else {
+
+        return recievedRewardData.payload;
+
+      }
 
     }
 
-    return allDelegators;
-
   } catch (error) {
-    console.error("API Error:", error);
-    return []
+    throw new Error ("Could not load data from the Server.")
   }
 }
 
-
-//Get toknomic stats for calculating delegator rewards with the ada in circulation
-export async function fetchTokenomicStats(params : EpochParams) : Promise<TokenomicStats[]> {
+//TODO!! renaming
+export async function fetchCalculatorData(): Promise<PoolHistory> {
   try {
-    const responseTokenomicStats = await axios.get<TokenomicStats[]>(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/totals?_epoch_no=${params.epoch + 1}`);
-    return responseTokenomicStats.data;
+    const calculatorData = (await axios.get<PoolHistory>(`${process.env.NEXT_PUBLIC_API_URL}/api/get-calculator-data`)).data
+    return calculatorData
   } catch (error) {
-    console.error("API Error:", error);
-    return[];
+    throw new Error ("Could not load calculator data from server.")
   }
 }
 
-//Get pool owner history to filter the owner from the delegator list
-export async function fetchPoolOwnerHistory(params : EpochParams) : Promise<PoolOwnerHistory[]> {
-
-  const data = {
-    _pool_bech32_ids: [params.poolId]
-  };
-
+export async function fetchCurrentAdaDollarRate(): Promise<ExchangeValue> {
   try {
-    const responsePoolOwnerHistory = await axios.post<PoolOwnerHistory[]>(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/pool_owner_history`, data, {
-      headers: {
-        'accept': 'application/json',
-        'content-type': 'application/json'
-      }
-    });
-    return responsePoolOwnerHistory.data;
+    const currentRate = (await axios.get<ExchangeValue>("https://api.coingecko.com/api/v3/simple/price?ids=cardano&vs_currencies=usd")).data
+    return currentRate
   } catch (error) {
-    console.error("API Error:", error);
-    return[];
+    throw new Error("Could not fetch current exchange rate.")
   }
 }
+

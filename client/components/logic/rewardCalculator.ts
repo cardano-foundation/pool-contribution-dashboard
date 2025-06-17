@@ -68,13 +68,8 @@ export function calculateRewards(epochParams: EpochParams, poolHistory: PoolHist
 
     //Calculating the rewards for each delegator
     for (const delegator of delegatorStake) {
-        let m1 = poolReward.minus(fixedCost);
-        let m2 = (Big(1).minus(margin));
-        let div1 = (poolStake.div(adaInCirculation));
-        let div2 = (Big(delegator.amount).div(adaInCirculation));
-        let m3 = (div2.div(div1));
 
-        let reward = (m1.times(m2)).times(m3);
+        let reward = calculateReward(poolReward, fixedCost, margin, poolStake, adaInCirculation, Big(delegator.amount));
 
         delegatorRewards.push({address: delegator.stake_address, stake: Big(delegator.amount), reward: reward.round(0, 0)});
     }
@@ -94,6 +89,48 @@ export function calculateRewards(epochParams: EpochParams, poolHistory: PoolHist
 
 }
 
+export function calculateRewardForOneDelegator (epochParams: EpochParams, poolHistory: PoolHistory[], delegatorStake: DelegatorStake[], tokenomicStats: TokenomicStats[], poolOwnerHistory: PoolOwnerHistory[], delegatorAddress: string): Delegator {
+
+    //Using the pool fees and the rewards delegated to the members (including the operator) to get the total rewards of that epoch
+    const poolReward: Big = Big(poolHistory[0].pool_fees).add(Big(poolHistory[0].deleg_rewards));
+
+    const fixedCost: Big = Big(poolHistory[0].fixed_cost);
+
+    //TODO! Currently using 0.03 as this seems to be the median maring in most epochs but more testing is needed.
+    const margin: Big = Big(epochParams.margin);
+
+    const poolStake: Big = Big(poolHistory[0].active_stake);
+
+    //Constant from the Protocol
+    const totalLovelace: Big = Big("45000000000000000");
+
+    const reserveFromLastEpoch: Big = Big(tokenomicStats[0].reserves);
+
+    const adaInCirculation: Big = totalLovelace.minus(reserveFromLastEpoch);
+
+    //Hier pruefen, ob der Delegator in der angefragten Epoche ueberhaupt gestaked hat. Falls nicht, dann einfach nichts als reward zurueck geben. 
+
+    //console.log(delegatorStake.length);
+
+    for (let i = 0; i < delegatorStake.length; i++){
+        //console.log(delegatorAddress)
+        if (delegatorStake[i].stake_address == delegatorAddress) {
+
+            //console.log("stake " + delegatorStake[i].amount);
+
+            let reward = calculateReward(poolReward, fixedCost, margin, poolStake, adaInCirculation, Big(delegatorStake[i].amount));
+
+            //console.log("reward " + reward)
+            return ({address: delegatorAddress, stake: Big(delegatorStake[i].amount), reward: reward})
+
+        }
+    }
+
+    //Unsure if best solution
+    return ({address: delegatorAddress, stake: Big(0), reward: Big(0)});
+
+}
+
 //Sets the . for better readability in ada/lovelace
 function lovelaceToAda (lovelace: Big): Big {
     let ada: string = lovelace.toString();
@@ -101,4 +138,30 @@ function lovelaceToAda (lovelace: Big): Big {
         ada = ada.substring(0, ada.length - 6) + "." + ada.substring(ada.length - 6);
     }
     return Big(ada);
+}
+
+export function roundToAda (lovelace: Big): Big {
+    let ada: string = lovelace.toString();
+    if (ada.length > 6) {
+        ada = ada.substring(0, ada.length - 6);
+    }
+    return Big(ada)
+}
+
+export function bigToFloat(lovelace: Big): number {
+    let intPart = Math.floor(lovelace.toNumber() / 1_000_000);
+    let mantissaPart = lovelace.toNumber() % 1_000_000;
+
+    return Number(`${intPart}.${mantissaPart.toString().padStart(6, '0')}`);
+}
+
+function calculateReward (poolReward: Big, fixedCost: Big, margin: Big, poolStake: Big, adaInCirculation: Big, delegatorStake: Big): Big {
+    let m1 = poolReward.minus(fixedCost);
+    let m2 = (Big(1).minus(margin));
+    let div1 = (poolStake.div(adaInCirculation));
+    let div2 = (Big(delegatorStake).div(adaInCirculation));
+    let m3 = (div2.div(div1));
+
+    let reward = (m1.times(m2)).times(m3);
+    return reward;
 }

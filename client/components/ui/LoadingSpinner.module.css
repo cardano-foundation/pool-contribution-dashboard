@@ -1,0 +1,50 @@
+.loading-spinner-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  perspective: 1000px;
+  transform-style: preserve-3d;
+}
+
+.static-big-circle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+}
+
+.animated-small-circle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform-origin: center center;
+  z-index: 1;
+}
+
+@keyframes orbitSmallCircle {
+  0% {
+    transform: translate(-50%, -50%) translateX(-30px) translateY(-0px) translateZ(0px);
+    animation-timing-function: ease-in;
+    
+  }
+  25% {
+    transform: translate(-50%, -50%) translateX(0px) translateY(-0px) translateZ(0px);
+    animation-timing-function: ease-out;
+}
+50% {
+    transform: translate(-50%, -50%) translateX(30px) translateY(-0px) translateZ(0px);
+    animation-timing-function: ease-in;
+}
+  75% {
+    transform: translate(-50%, -50%) translateX(0px) translateY(0px) translateZ(0px);
+    animation-timing-function: ease-out;
+}
+100% {
+    transform: translate(-50%, -50%) translateX(-30px) translateY(-0px) translateZ(0px);
+  }
+}
