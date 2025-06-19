@@ -347,6 +347,47 @@ async function getEpochHistory(epoch) {
     return epochHistory.data
 }
 
+/**
+ * Fetches a delegator history array for a specific epoch
+ * @param {number} epoch - the epoch for which the delegator history should be fetched
+ * @returns {object} the delegator history
+ * @throws {Error} if the given epoch isNaN
+ * @throws {Error} if the given epoch is  <= 0
+ */
+async function getDelegatorHistoryForSpecificEpoch(epoch) {
+    if (isNaN(epoch)){
+        throw new Error ("Given epoch is NaN.")
+    } else if (epoch <= 0) {
+        throw new Error ("Given epoch is <= 0.")
+    }
+
+    const delegatorHistory = await koiosAxios.get(`${env.API_URL}/pool_delegators_history?_pool_bech32=${env.POOL_ID}&_epoch_no=${epoch}`)
+    return delegatorHistory.data   
+}
+
+/**
+ * Fetches a pool history array for a specific epoch
+ * @param {number} epoch - the epoch for which the delegator history should be fetched
+ * @returns {object} the pool history
+ * @throws {Error} if the given epoch isNaN
+ * @throws {Error} if the given epoch is  <= 0
+ * @throws {Error} if the given poolId is not a string
+ */
+async function getPoolHistoryForSpecificEpochAndSpecificPool(epoch, poolId) {
+    if (isNaN(epoch)){
+        throw new Error ("Given epoch is NaN.")
+    } else if (epoch <= 0) {
+        throw new Error ("Given epoch is <= 0.")
+    }
+
+    if (typeof poolId !== "string") {
+        throw new Error ("Given poolId is not a string.")
+    }
+
+    const poolHistory = await koiosAxios.get(`/pool_history?_pool_bech32=${poolId}&_epoch_no=${epoch}`)
+    return poolHistory.data
+}
+
 module.exports = {
     getCurrentEpoch,
     getPoolList,
@@ -359,5 +400,7 @@ module.exports = {
     getProtocolParameters,
     getPoolInfo,
     getGenesisInfo,
-    getEpochHistory
+    getEpochHistory,
+    getDelegatorHistoryForSpecificEpoch,
+    getPoolHistoryForSpecificEpochAndSpecificPool
 };

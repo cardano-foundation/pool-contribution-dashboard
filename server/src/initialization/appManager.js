@@ -26,7 +26,7 @@ let globalServerData = {
 async function initializeData() {
 
     try {
-        
+
         console.log('Data initialization is starting...');
 
         globalServerData.currentEpoch = await koiosApi.getCurrentEpoch()
@@ -41,7 +41,7 @@ async function initializeData() {
 
             console.log("Local state for epoch " + globalServerData.currentEpoch + " was loaded.")
 
-        //If not check for last epoch to see if an update can be run
+            //If not check for last epoch to see if an update can be run
         } else {
             console.log("No local state was found for epoch " + globalServerData.currentEpoch + ".")
             console.log("Checking if update is possible...")
@@ -54,6 +54,13 @@ async function initializeData() {
                 console.log("Update is possible.")
 
                 //TODO!! Updating
+                await updateOnEpochChange(globalServerData.currentEpoch, loadedState, env.MODE)
+
+                await setGlobalServerData(loadedState, env.MODE)
+
+                await localDataManager.saveToJSON(globalServerData, `server_state_${env.MODE}_epoch_${globalServerData.currentEpoch}`);
+
+                console.log("Finished Updating. Epoch " + globalServerData.currentEpoch + " was loaded.")
 
                 //If not local data was found
             } else {
@@ -134,10 +141,10 @@ async function fetchSpecificDataForMode(mode) {
     const genesisInfo = await koiosApi.getGenesisInfo()
     globalServerData.calculatorData.active_slot_coeff = genesisInfo[0].activeslotcoeff
     globalServerData.calculatorData.epoch_length_in_slots = genesisInfo[0].epochlength
-   
+
     switch (mode) {
         case 'CUSTOM_MARGIN':
-            
+
             const customMarginReward = await rewardCalculator.calculatePoolRewards(
                 env.CUSTOM_MARGIN,
                 globalServerData.currentEpoch,
@@ -145,13 +152,13 @@ async function fetchSpecificDataForMode(mode) {
                 globalServerData.delegatorHistory,
                 globalServerData.tokenomicStatsOrderedByEpoch,
                 globalServerData.poolOwners)
-                
-                //For reward
-                globalServerData.delegatorRewardData = customMarginReward.rewardData
-                globalServerData.ownerRewardData = customMarginReward.ownerRewardData
-                
-                //For calculatorData
-                globalServerData.calculatorData.margin = env.CUSTOM_MARGIN
+
+            //For reward
+            globalServerData.delegatorRewardData = customMarginReward.rewardData
+            globalServerData.ownerRewardData = customMarginReward.ownerRewardData
+
+            //For calculatorData
+            globalServerData.calculatorData.margin = env.CUSTOM_MARGIN
 
             break;
 
@@ -168,12 +175,12 @@ async function fetchSpecificDataForMode(mode) {
                 globalServerData.tokenomicStatsOrderedByEpoch,
                 globalServerData.poolOwners)
 
-                //For reward
-                globalServerData.delegatorRewardData = medianMarginReward.rewardData
-                globalServerData.ownerRewardData = medianMarginReward.ownerRewardData
+            //For reward
+            globalServerData.delegatorRewardData = medianMarginReward.rewardData
+            globalServerData.ownerRewardData = medianMarginReward.ownerRewardData
 
-                //For calculatorData
-                globalServerData.calculatorData.margin = globalServerData.allEpochsMedianMargins[globalServerData.currentEpoch - 2]
+            //For calculatorData
+            globalServerData.calculatorData.margin = globalServerData.allEpochsMedianMargins[globalServerData.currentEpoch - 2]
 
             break;
 
@@ -234,7 +241,7 @@ async function setGlobalServerData(loadedState, mode) {
 
     globalServerData.calculatorData.active_slot_coeff = loadedState.calculatorData.active_slot_coeff
     globalServerData.calculatorData.epoch_length_in_slots = loadedState.calculatorData.epoch_length_in_slots
-   
+
 
     switch (mode) {
         case 'CUSTOM_MARGIN':
@@ -243,6 +250,7 @@ async function setGlobalServerData(loadedState, mode) {
 
             //calculatorData
             globalServerData.calculatorData.margin = loadedState.calculatorData.margin
+            break;
 
         case 'MEDIAN_MARGIN':
             globalServerData.delegatorRewardData = loadedState.delegatorRewardData
@@ -253,11 +261,15 @@ async function setGlobalServerData(loadedState, mode) {
 
             //calculatorData
             globalServerData.calculatorData.margin = loadedState.calculatorData.margin
+            break;
 
         case 'PERCENTAGE':
 
             //TODO!!
             break;
+
+        default:
+            throw new Error("Given mode is not defined correctly")
 
     }
 }
@@ -266,6 +278,216 @@ async function startApp(appInstance) {
 
     await initializeData(); // Initialisiere die Daten des Servers
 
+}
+
+/**
+ * Checks the mode set in .env. Updates the locally stored data under specific conditions. 
+ * When in MEDIAN_MARGIN mode:
+ * - All blocks built in the epoch that needs to be calculated (currentEpoch - 2) are fetched
+ * - Checks if a pool that is currently active has built a block in the epoch
+ * - If so, its margin is used to calculate the new median
+ * - The new margins get added to the localy stored files
+ * 
+ * @throws {Error} if no pool data could be accuired when fetching it new from KOIOS
+ * @throws {Error} if something went wrong and the margins array is empty
+ * @throws {Error} if a wrong mode is set in .env
+ */
+async function updateOnEpochChange(currentEpoch, loadedState, mode) {
+    //When updated the epoch to calculate should be currentEpoch - 2
+
+    //Get current epoch (Rewards can only be calculated for currentEpoch - 2)
+    //This is used to get a list of all pools that ever were active in the staking process
+
+    //In epoche 559 werden die Daten für epoche 557 berechnet (median margins)
+    //Jedes Update sollte als die Epoche currentEpoch - 2 berechnen. 
+    if (isNaN(currentEpoch)) {
+        throw new Error("Given currentEpoch value isNaN")
+    } else if (currentEpoch <= 0) {
+        throw new Error("Given currentEpoch value is <= 0")
+    }
+
+    if (loadedState === null) {
+        throw new Error("Given state is empty")
+    }
+
+    console.log(mode)
+
+    if (!(mode === "CUSTOM_MARGIN" || mode === "MEDIAN_MARGIN" || mode === "PERCENTAGE")) {
+        throw new Error("Mode is not set correctly.")
+    }
+
+    //Fetching general values
+
+    console.log("Using mode " + mode)
+
+    console.log("Updating to epoch: " + currentEpoch)
+
+    //Parameters for all modes
+    loadedState.poolList = await koiosApi.getPoolList()
+    loadedState.poolHistoryOrderedByEpoch = await koiosApi.getPoolHistoryForENVPool();
+
+    //TODO!! Test this 
+    const newDelegatorHistory = koiosApi.getDelegatorHistoryForSpecificEpoch(currentEpoch)
+    loadedState.delegatorHistory.push(newDelegatorHistory)
+
+    loadedState.tokenomicStatsOrderedByEpoch = await koiosApi.getTokenomicStats()
+    loadedState.poolOwners = await koiosApi.getPoolOwnerHistoryForENVPool()
+
+    //Parameters for calculator data in all modes
+    loadedState.calculatorData = {}
+    loadedState.calculatorData.mode = mode
+
+    //All from history
+    loadedState.calculatorData.epoch_no = loadedState.poolHistoryOrderedByEpoch[currentEpoch - 2].epoch_no
+    loadedState.calculatorData.active_stake = loadedState.poolHistoryOrderedByEpoch[currentEpoch - 2].active_stake
+    loadedState.calculatorData.active_stake_pct = loadedState.poolHistoryOrderedByEpoch[currentEpoch - 2].active_stake_pct
+    loadedState.calculatorData.saturation_pct = loadedState.poolHistoryOrderedByEpoch[currentEpoch - 2].saturation_pct
+    loadedState.calculatorData.block_cnt = loadedState.poolHistoryOrderedByEpoch[currentEpoch - 2].block_cnt
+    loadedState.calculatorData.delegator_cnt = loadedState.poolHistoryOrderedByEpoch[currentEpoch - 2].delegator_cnt
+    loadedState.calculatorData.fixed_cost = loadedState.poolHistoryOrderedByEpoch[currentEpoch - 2].fixed_cost
+    loadedState.calculatorData.pool_fees = loadedState.poolHistoryOrderedByEpoch[currentEpoch - 2].pool_fees
+    loadedState.calculatorData.deleg_rewards = loadedState.poolHistoryOrderedByEpoch[currentEpoch - 2].deleg_rewards
+    loadedState.calculatorData.member_rewards = loadedState.poolHistoryOrderedByEpoch[currentEpoch - 2].member_rewards
+    loadedState.calculatorData.epoch_ros = loadedState.poolHistoryOrderedByEpoch[currentEpoch - 2].epoch_ros
+
+    //currentEpoch - 2
+    const epochHistory = await koiosApi.getEpochHistory(currentEpoch - 2)
+    loadedState.calculatorData.fees = epochHistory[0].fees
+    loadedState.calculatorData.total_block_count = epochHistory[0].blk_count
+    loadedState.calculatorData.total_active_stake = epochHistory[0].active_stake
+
+    //currentEpoch - 1
+    loadedState.calculatorData.reserves = loadedState.tokenomicStatsOrderedByEpoch[currentEpoch - 1].reserves
+
+    //currentEpoch
+    const currentProtocolParameters = await koiosApi.getProtocolParameters(currentEpoch)
+    loadedState.calculatorData.influence = currentProtocolParameters[0].influence
+    loadedState.calculatorData.decentralisation = currentProtocolParameters[0].decentralisation
+    loadedState.calculatorData.optimal_pool_count = currentProtocolParameters[0].optimal_pool_count
+    loadedState.calculatorData.monetary_expand_rate = currentProtocolParameters[0].monetary_expand_rate
+    loadedState.calculatorData.treasury_growth_rate = currentProtocolParameters[0].treasury_growth_rate
+
+    //TODO!! better fetched over /pool_updates for currentEpoch - 2
+    const currentPoolInfo = await koiosApi.getPoolInfo(env.POOL_ID)
+    loadedState.calculatorData.pledge = currentPoolInfo[0].pledge
+
+    const genesisInfo = await koiosApi.getGenesisInfo()
+    loadedState.calculatorData.active_slot_coeff = genesisInfo[0].activeslotcoeff
+    loadedState.calculatorData.epoch_length_in_slots = genesisInfo[0].epochlength
+
+
+
+    switch (mode) {
+
+        case 'CUSTOM_MARGIN':
+            console.log("Updating custom margin rewards...")
+            //await calculatePoolRewards(CUSTOM_MARGIN, currentEpoch)
+
+            const customMarginReward = await rewardCalculator.calculatePoolRewards(
+                env.CUSTOM_MARGIN,
+                loadedState.currentEpoch,
+                loadedState.poolHistoryOrderedByEpoch,
+                loadedState.delegatorHistory,
+                loadedState.tokenomicStatsOrderedByEpoch,
+                loadedState.poolOwners)
+
+            //For reward
+            loadedState.delegatorRewardData = customMarginReward.rewardData
+            loadedState.ownerRewardData = customMarginReward.ownerRewardData
+
+            //For calculatorData
+            loadedState.calculatorData.margin = env.CUSTOM_MARGIN
+            break;
+
+        case 'MEDIAN_MARGIN':
+            console.log("Updating median margin rewards...")
+
+            //Get all blocks that were made in the epoch
+            const blocks = await koiosApi.getBlocksFromEpoch(currentEpoch - 2)
+
+            console.log("There are " + blocks.length + " blocks in epoch " + (currentEpoch - 2) + ".")
+
+            let margins = [];
+
+            //If a pool from pool list, that is not retired has built a block in that epoch
+            for (let i = 0; i < loadedState.poolList.length; i++) {
+                //If pool is currently (two epochs after searched epoch) retired and did retire before or during the searched for epoch
+                if (loadedState.poolList[i].pool_status === 'retired' && loadedState.poolList[i].retiring_epoch <= currentEpoch - 2) {
+                    continue;
+                } else {
+                    //Check if the pool did build a block in the searched for epoch
+                    for (let x = 0; x < blocks.length; x++) {
+                        //If a block was build by the currently watched pool
+                        if (blocks[x].pool === loadedState.poolList[i].pool_id_bech32) {
+                            //Check for margin
+                            //If margin was changed before or during current epoch, the margin in pool list should be up to date
+                            if (loadedState.poolList[i].active_epoch_no <= currentEpoch - 2) {
+                                //console.log("Can use margin from pool list.")
+                                margins.push(loadedState.poolList[i].margin)
+                                break;
+                                //If pool was updated after currentEpoch - 2, the value in pool List is not up to date and must be fetched manually
+                            } else {
+                                let poolData = await koiosApi.getPoolHistoryForSpecificEpochAndSpecificPool(currentEpoch - 2, loadedState.poolList[i].pool_id_bech32)
+
+                                if (!poolData) {
+                                    throw new Error('No pool data was acquired.')
+                                }
+
+                                console.log(poolData[0].margin)
+                                margins.push(poolData[0].margin)
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (!margins) {
+                throw new Error('No margins were found')
+            }
+
+            //Update the all margins array
+            loadedState.allEpochsPoolMargins.push(margins)
+
+            //Calcualte median for the new epoch
+
+            let median = 0;
+
+            margins.sort((a, b) => a - b)
+            let mid = Math.floor(margins.length / 2);
+            if (margins.length % 2 !== 0) {
+                median = margins[mid]
+            } else {
+                median = (margins[mid - 1] + margins[mid]) / 2
+            }
+
+            //Update the median margin array
+            loadedState.allEpochsMedianMargins.push(median)
+
+            //Recalculate the rewards
+            const medianMarginReward = await rewardCalculator.calculatePoolRewards(
+                loadedState.allEpochsMedianMargins,
+                loadedState.currentEpoch,
+                loadedState.poolHistoryOrderedByEpoch,
+                loadedState.delegatorHistory,
+                loadedState.tokenomicStatsOrderedByEpoch,
+                loadedState.poolOwners)
+
+            //For reward
+            loadedState.delegatorRewardData = medianMarginReward.rewardData
+            loadedState.ownerRewardData = medianMarginReward.ownerRewardData
+
+            //For calculatorData
+            loadedState.calculatorData.margin = loadedState.allEpochsMedianMargins[currentEpoch - 2]
+            break;
+
+        case 'PERCENTAGE':
+            console.log("Updating percentage rewards...")
+            //TODO!! Implement the percentage calculation
+
+        default:
+            throw new Error("Given mode is not setup correctly.")
+    }
 }
 
 /**

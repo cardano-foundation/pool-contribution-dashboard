@@ -190,6 +190,8 @@ const Card: React.FC<CardProps> = ({ title, children, className = '', height = '
       const relativeEffectOfPool = newPoolStake.div(totalActiveStake)
       console.log("Relative effect of pool is: " + relativeEffectOfPool.toString())
 
+
+      //Blocks
       const realPoolBlocks = Big(usedData.block_cnt)
 
       let  expectedBlocks = relativeEffectOfPool.times(totalBlocksThisEpoch).round(0, 1)
