@@ -185,7 +185,7 @@ const Card: React.FC<CardProps> = ({ title, children, className = '', height = '
       console.log("Total blocks this epoch is: " + totalBlocksThisEpoch.toString())
 
       /*    
-      For that I will calculate the expected Blocks like this: (poolStake + simulatedDelegation/totalActiveStake + simulatedDelegation)*totalBlocksThisEpoch
+      For that I will calculate the expected Blocks like this: ((poolStake + simulatedDelegation)/(totalActiveStake + simulatedDelegation))*totalBlocksThisEpoch
       */
       const relativeEffectOfPool = newPoolStake.div(totalActiveStake)
       console.log("Relative effect of pool is: " + relativeEffectOfPool.toString())
