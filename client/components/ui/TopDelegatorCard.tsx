@@ -46,10 +46,13 @@ const Card: React.FC<CardProps> = ({ title, children, className = '', height = '
   }
 
   return (
-    <div className={`bg-cf-gray rounded-2xl shadow-[0_14px_50px_0_rgba(3,36,67,0.1)] p-6 ${height} ${scrollClasses} ${className}`}>
-      <h3 className="text-3xl ml-2 text-cf-text">{title}</h3>
+    <div className={`bg-cf-gray dark:bg-cf-text transition-colors duration-200 rounded-2xl
+                      shadow-[0_14px_50px_0_rgba(3,36,67,0.1)]
+                      dark:shadow-[0_14px_50px_0px_rgba(23,23,23,0.24)]
+                      p-6 ${height} ${scrollClasses} ${className}`}>
+      <h3 className="text-3xl ml-2 text-cf-text dark:text-cf-gray transition-colors duration-200">{title}</h3>
       <p className='ml-2 mb-2 text-gray-400 text-xs'>2 epochs ago</p>
-      <div className="text-cf-text">
+      <div className="text-cf-text dark:text-cf-gray transition-colors duration-200">
         <Table values={topItems}></Table>
         {children}
       </div>

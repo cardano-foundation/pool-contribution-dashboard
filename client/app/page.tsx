@@ -1,33 +1,36 @@
 "use client";
 
-import SimpleLineGraph from "@/components/forms/simpleLineGraph";
-import {useRewardData, useCalculatorData} from "@/components/hooks/useData";
-import OverviewCard from '@/components/ui/OverviewCard';
-import AllTimeCard from '@/components/ui/AllTimeCard';
-import CallculatorCard from '@/components/ui/CalculatorCard';
+import { useRewardData, useCalculatorData } from "@/components/hooks/useData";
+import { OverviewCard } from '@/components/ui/OverviewCard';
+import { AllTimeCard } from '@/components/ui/AllTimeCard';
+import { CalculatorCard } from '@/components/ui/CalculatorCard';
 import TopDelegatorCard from '@/components/ui/TopDelegatorCard';
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { BurgerMenuButton } from '@/components/ui/BurgerMenuButton';
+import { ThemeSwitcherButton } from "@/components/ui/ThemeSwitcherButton";
 
 export default function Home() {
 
   const { rewardData, rewardLoading, rewardError } = useRewardData();
-  const {calculatorData, calculatorLoading, calculatorError} = useCalculatorData();
-  const calculatorCollection = {calculatorData, calculatorLoading, calculatorError}
+  const { calculatorData, calculatorLoading, calculatorError } = useCalculatorData();
+  const calculatorCollection = { calculatorData, calculatorLoading, calculatorError }
 
   if (rewardLoading) return <LoadingSpinner
-            bigCircleDiameter={100}
-            smallCircleDiameter={90}
-            animationDuration={1}
-          />;
+    bigCircleDiameter={100}
+    smallCircleDiameter={90}
+    animationDuration={1}
+  />;
   if (rewardError) return <p>Error while loading data: {rewardError}</p>;
   if (!rewardData) return <p>No data found</p>;
-   
+
   return (
     <div className="flex flex-col h-full">
-      <div className="mb-6 flex">
+      <div className="mb-6 flex items-center">
         <BurgerMenuButton></BurgerMenuButton>
-        <h1 className="text-3xl text-cf-text flex items-center justify-center ml-3 2xl:ml-0">Overview</h1>
+        <h1 className="text-3xl text-cf-text dark:text-cf-gray transition-colors duration-200 flex items-center justify-center ml-3 2xl:ml-0">Overview</h1>
+        <div className="ml-auto">
+          <ThemeSwitcherButton />
+        </div>
       </div>
       <div className="grid grid-cols-1 gap-6 pb-8 2xl:pb-0 2xl:grid-cols-3 flex-grow">
 
@@ -39,9 +42,9 @@ export default function Home() {
           {null}
         </AllTimeCard>
 
-        <CallculatorCard title="Reward Calculator" className="2xl:col-span-1" height="min-h-90" data={calculatorCollection}>
+        <CalculatorCard title="Reward Calculator" className="2xl:col-span-1" height="min-h-90" data={calculatorCollection}>
           {null}
-        </CallculatorCard>
+        </CalculatorCard>
 
         <TopDelegatorCard title="Top 5 Delegator" scrollable={true} className="2xl:col-span-2" height="min-h-90" data={rewardData}>
           {null}

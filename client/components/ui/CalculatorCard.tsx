@@ -8,23 +8,23 @@ import LoadingSpinner from './LoadingSpinner';
 interface CardProps {
   title: string;
   children: React.ReactNode;
-  className?: string; 
+  className?: string;
   height?: string;
   scrollable?: boolean;
-  data: { calculatorData: PoolHistory | null, calculatorLoading: boolean, calculatorError: String | null}
+  data: { calculatorData: PoolHistory | null, calculatorLoading: boolean, calculatorError: String | null }
 }
 
-const Card: React.FC<CardProps> = ({ title, children, className = '', height = 'h-auto', scrollable = false, data }) => {
-  const scrollClasses = scrollable ? 'overflow-y-auto' : ''; 
+export function CalculatorCard({ title, children, className = '', height = 'h-auto', scrollable = false, data }: CardProps) {
+  const scrollClasses = scrollable ? 'overflow-y-auto' : '';
 
   const usedData = data.calculatorData;
 
   if (data.calculatorLoading) return (
     <div className={`bg-cf-gray rounded-2xl shadow-[0_14px_50px_0_rgba(3,36,67,0.1)] p-6 ${height} ${scrollClasses} ${className}`}>
       <LoadingSpinner
-        bigCircleDiameter={100}    
+        bigCircleDiameter={100}
         smallCircleDiameter={90}
-        animationDuration={1} 
+        animationDuration={1}
       />
     </div>
   );
@@ -47,7 +47,7 @@ const Card: React.FC<CardProps> = ({ title, children, className = '', height = '
       return false;
     }
 
-    
+
     //Input contains only numbers and max one .
     if (!/^[0-9]*\.?[0-9]*$/.test(cleanedInput)) {
       setError('Invalid symbols')
@@ -81,8 +81,8 @@ const Card: React.FC<CardProps> = ({ title, children, className = '', height = '
     fractionalPart = fractionalPart || "";
 
     if (fractionalPart.length > 6) {
-        setError('More than 6 decimals')
-        return false;
+      setError('More than 6 decimals')
+      return false;
     }
 
     let paddedFractionalPart = fractionalPart.padEnd(6, '0');
@@ -133,7 +133,7 @@ const Card: React.FC<CardProps> = ({ title, children, className = '', height = '
 
   const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
-    setInput(value); 
+    setInput(value);
     validateNumberInput(value, setInputError);
   };
 
@@ -145,12 +145,12 @@ const Card: React.FC<CardProps> = ({ title, children, className = '', height = '
 
       //Convert input to lovelace depending on the input (not ., how many spaces after . (fill with zeros), etc.)
       let cleanedInput = input.trim();
-  
+
       let [integerPart, fractionalPart] = cleanedInput.split('.');
       fractionalPart = fractionalPart || "";
-  
+
       let paddedFractionalPart = fractionalPart.padEnd(6, '0');
-  
+
       let lovelaceString = integerPart + paddedFractionalPart;
 
       console.log(data.calculatorData)
@@ -194,12 +194,12 @@ const Card: React.FC<CardProps> = ({ title, children, className = '', height = '
       //Blocks
       const realPoolBlocks = Big(usedData.block_cnt)
 
-      let  expectedBlocks = relativeEffectOfPool.times(totalBlocksThisEpoch).round(0, 1)
-      
+      let expectedBlocks = relativeEffectOfPool.times(totalBlocksThisEpoch).round(0, 1)
+
       expectedBlocks = realPoolBlocks.lt(expectedBlocks) ? expectedBlocks : realPoolBlocks
-      
+
       console.log("Expected Blocks are " + expectedBlocks.toString())
-      
+
       const relativeBlocksInEpoch = expectedBlocks.div(totalBlocksThisEpoch)
       console.log("Relative Blocks are " + relativeBlocksInEpoch.toString())
       const relativeActiveStake = newPoolStake.div(totalActiveStake)
@@ -326,9 +326,9 @@ const Card: React.FC<CardProps> = ({ title, children, className = '', height = '
 
       if (realPoolReward.lte(poolFixedCost)) {
         setResult("+0 Ada")
-      //If pool rewards are enough for delegator rewards
+        //If pool rewards are enough for delegator rewards
       } else {
-  
+
         let m1 = realPoolReward.minus(poolFixedCost);
 
         console.log("New Pool Stake" + newPoolStake.toString())
@@ -340,7 +340,7 @@ const Card: React.FC<CardProps> = ({ title, children, className = '', height = '
         let div1 = (newPoolStake.div(adaInCirculation));
         let div2 = (delegation.div(adaInCirculation));
         let m3 = (div2.div(div1));
-              
+
         let reward = (m1.times(m2)).times(m3);
 
         reward = reward.round(0, 1)
@@ -364,8 +364,8 @@ const Card: React.FC<CardProps> = ({ title, children, className = '', height = '
         const fractionalPart = cleanedReward.slice(-6);
 
         //Build string
-        cleanedReward =  `+${integerPart}.${fractionalPart} Ada`;
-        
+        cleanedReward = `+${integerPart}.${fractionalPart} Ada`;
+
         console.log(cleanedReward)
 
         setResult(cleanedReward)
@@ -391,17 +391,20 @@ const Card: React.FC<CardProps> = ({ title, children, className = '', height = '
   const isButtonDisabled: boolean = (!!inputError || input.trim() === '');
 
   return (
-    <div className={`bg-cf-gray rounded-2xl shadow-[0_14px_50px_0_rgba(3,36,67,0.1)] p-6 ${height} ${scrollClasses} ${className}`}>
-      <h3 className="text-3xl text-cf-text">{title}</h3>
+    <div className={`bg-cf-gray dark:bg-cf-text transition-colors duration-200 rounded-2xl 
+                      shadow-[0_14px_50px_0_rgba(3,36,67,0.1)]
+                      dark:shadow-[0_14px_50px_0px_rgba(23,23,23,0.24)]
+                      p-6 ${height} ${scrollClasses} ${className}`}>
+      <h3 className="text-3xl text-cf-text dark:text-cf-gray transition-colors duration-200">{title}</h3>
       <p className='mb-6 text-gray-400 text-xs'>Uses data from 2 epochs ago</p>
-      <p className='text-xl mb-2'>Possible Reward</p>
+      <p className='text-xl mb-2 text-cf-text dark:text-cf-gray transition-colors duration-200'>Possible Reward</p>
       <p className="text-green-600 mb-10 text-4xl">{result}</p>
-      <div className="text-cf-text">
+      <div className="text-cf-text dark:text-cf-gray transition-colors duration-200">
         <div className='rounded-lg'>
           <div>
             <label className={`block ${!!inputError ? "mb-0" : "mb-4"}`}>
-              <div className="flex items-stretch rounded-[10px] shadow-[0_1px_4px_0_rgba(3,36,67,0.15)]
-                              ${inputError ? 'focus-visible:shadow-[0_1px_4px_0_rgba(3,36,67,0.15),inset_0_0_0_2px_rgb(251_44_54)]' : 'focus-visible:shadow-[0_1px_4px_0_rgba(3,36,67,0.15),inset_0_0_0_2px_rgb(153_161_175)]'} /* HINZUFÜGEN: focus-within */
+              <div className="flex items-stretch rounded-[10px] shadow-[0_1px_4px_0_rgba(3,36,67,0.15)] dark:shadow-[0_3px_8px_0px_rgba(23,23,23,0.24)]
+                              ${inputError ? 'focus-visible:shadow-[0_1px_4px_0_rgba(3,36,67,0.15),inset_0_0_0_2px_rgb(251_44_54)]' : 'focus-visible:shadow-[0_1px_4px_0_rgba(3,36,67,0.15),inset_0_0_0_2px_rgb(153_161_175)]'}
               ">
                 <input
                   className={`
@@ -411,6 +414,12 @@ const Card: React.FC<CardProps> = ({ title, children, className = '', height = '
                     rounded-l-[10px]
                     w-full
                     active: outline-none
+                    text-cf-text
+                    dark:text-cf-gray
+                    placeholder-cf-text
+                    dark:placeholder-cf-gray
+                    transition-colors duration-500
+                    placeholder-opacity-75
                     ${inputError ? 'focus-visible:border-transparent focus-visible:shadow-[inset_0_0_0_2px_rgb(251_44_54)]' : 'focus-visible:border-transparent focus-visible:shadow-[inset_0_0_0_2px_rgb(153_161_175)]'}
                   `}
                   type="text"
@@ -427,6 +436,8 @@ const Card: React.FC<CardProps> = ({ title, children, className = '', height = '
                     flex
                     items-center
                     text-cf-text
+                    dark:text-cf-gray
+                    transition-colors duration-200
                     
                     "
                 >
@@ -442,15 +453,21 @@ const Card: React.FC<CardProps> = ({ title, children, className = '', height = '
                           px-4 
                           py-2
                         bg-cf-gray
+                          dark:bg-cf-text
                         text-cf-text
+                          dark:text-cf-gray
                           rounded-[10px]
                           shadow-[0_4px_10px_0_rgba(3,36,67,0.24)]
+                          dark:shadow-[0_2px_10px_0px_rgba(23,23,23,0.24)]
                         hover:bg-gray-200
+                          dark:hover:bg-[#303030]
                           transition-colors duration-200
                           cursor-pointer
 
                         disabled:bg-gray-300
+                        dark:disabled:bg-[#303030]
                         disabled:text-gray-500
+                          dark:disabled:text-cf-gray
                           disabled:opacity-75
                           disabled:shadow-none
                           disabled:cursor-not-allowed'
@@ -464,5 +481,3 @@ const Card: React.FC<CardProps> = ({ title, children, className = '', height = '
     </div>
   );
 };
-
-export default Card;

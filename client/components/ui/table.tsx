@@ -34,7 +34,7 @@ export default function Table({values}: {values: RewardData[]}) {
             <tbody>
               {values.map((row, index) => (
                 <tr key={row.delegator}>
-                  <td className="pr-6 py-2 whitespace-nowrap text-gray-900 max-w-20 truncate">
+                  <td className="pr-6 py-2 whitespace-nowrap text-cf-text dark:text-cf-gray transition-colors duration-200 max-w-20 truncate">
                     <span className='text-gray-400 mr-2'>{index + 1}.</span> {row.delegator}
                   </td>
                   <td className="pr-6 py-2 whitespace-nowrap text-blue-600">

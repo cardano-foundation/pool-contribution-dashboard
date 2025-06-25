@@ -13,7 +13,7 @@ const DESKTOP_BREAKPOINT_PX = 1536; // Entspricht Tailwind '2xl'
 
 export function SidebarProvider({ children, sidebarContent }: SidebarProviderProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [windowWidth, setWindowWidth] = useState<number>(DESKTOP_BREAKPOINT_PX);
+  const [windowWidth, setWindowWidth] = useState<number>(0);
   const [disableTransition, setDisableTransition] = useState(false);
 
   // isMobileView wird basierend auf dem windowWidth berechnet
@@ -82,7 +82,7 @@ export function SidebarProvider({ children, sidebarContent }: SidebarProviderPro
         {/* Hauptinhalt */}
         <div
           className={`
-            h-full bg-cf-gray z-10 flex flex-col flex-grow
+            h-full z-10 flex flex-col flex-grow
             ${disableTransition ? 'transition-none' : 'transform transition-transform duration-300 ease-in-out'}
             ${isMobileView && isSidebarOpen ? 'absolute top-0 left-0 w-full translate-x-64' : ''}
             ${isMobileView && !isSidebarOpen ? 'absolute top-0 left-0 w-full translate-x-0' : ''}
@@ -92,14 +92,21 @@ export function SidebarProvider({ children, sidebarContent }: SidebarProviderPro
         >
           <div
             className={`
-              flex-1 min-h-screen bg-cf-gray shadow-[-4px_0_80px_0px_rgba(3,36,67,0.24)] rounded-l-3xl
+              flex-1 min-h-screen bg-cf-gray dark:bg-cf-text z-[0] 
+              transition-colors duration-200 
+              shadow-[-4px_0_80px_0px_rgba(3,36,67,0.24)]
+              dark:shadow-[-4px_0_80px_0px_rgba(23,23,23,0.24)]
+              rounded-l-3xl
             `}
-            style={{
-              backgroundImage: 'url(/images/dots.svg)',
-              backgroundRepeat: 'repeat',
-              backgroundPosition: '12px 12px',
-            }}
           >
+            <div
+              className="absolute inset-0 z-[-1] transition-opacity duration-200"
+              style={{
+                backgroundImage: 'url(/images/dots.svg)',
+                backgroundRepeat: 'repeat',
+                backgroundPosition: '12px 12px',
+                opacity: 'var(--svg-opacity)'
+              }} />
             <div className="relative w-full h-full p-4 pt-6 2xl:p-10 flex flex-col overflow-auto">
               {children}
             </div>
