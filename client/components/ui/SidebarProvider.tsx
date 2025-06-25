@@ -8,63 +8,94 @@ interface SidebarProviderProps {
   sidebarContent: React.ReactNode;
 }
 
-const SIDEBAR_WIDTH_PX = 256; // Entspricht Tailwind 'w-64'
-const DESKTOP_BREAKPOINT_PX = 1536; // Entspricht Tailwind '2xl'
+//Tailwind w-64 for margin in desktop view
+const SIDEBAR_WIDTH_PX = 256;
+//Taiwlind 2xl for mobile breakpoint
+const DESKTOP_BREAKPOINT_PX = 1536;
 
 export function SidebarProvider({ children, sidebarContent }: SidebarProviderProps) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [windowWidth, setWindowWidth] = useState<number>(0);
-  const [disableTransition, setDisableTransition] = useState(false);
+  const [disableTransition, setDisableTransition] = useState(true);
+  const [isContentReady, setIsContentReady] = useState(false);
 
-  // isMobileView wird basierend auf dem windowWidth berechnet
+  //Used to check if view is mobile
   const isMobileView = windowWidth < DESKTOP_BREAKPOINT_PX;
 
+  //Always uses transition animations when changing manually
   const toggleSidebar = () => {
-    setDisableTransition(false); // Transition für manuelle Aktionen immer aktivieren
+    setDisableTransition(false);
     setIsSidebarOpen(prev => !prev);
   };
 
   useEffect(() => {
-    // Initialen windowWidth setzen und Event-Listener hinzufügen
-    const handleResize = () => {
-      setWindowWidth(window.innerWidth);
-    };
 
-    // Beim Mounten und bei jeder Größenänderung die Größe aktualisieren
-    handleResize(); // Initialen Wert setzen
-    window.addEventListener('resize', handleResize);
+    if (typeof window !== 'undefined') {
+      //Initial width of the window
+      const initialWidth = window.innerWidth;
+      setWindowWidth(initialWidth);
 
-    // Medienanfragen-Logik für Desktop-Breakpoint
-    const desktopMediaQuery = window.matchMedia(`(min-width: ${DESKTOP_BREAKPOINT_PX}px)`);
-    const handleMediaQueryChange = (e: MediaQueryListEvent | MediaQueryList) => {
-      setDisableTransition(true); // Transition deaktivieren, um Springen beim Wechsel zu vermeiden
-      const timer = setTimeout(() => {
-        setDisableTransition(false); // Transition wieder aktivieren
-      }, 50); // Kurze Verzögerung
+      //Check if the initial width needs mobile view
+      const initialIsMobileView = initialWidth < DESKTOP_BREAKPOINT_PX;
 
-      if (e.matches) {
-        // Desktop-Ansicht: Sidebar immer offen halten
-        setIsSidebarOpen(true);
-      } else {
-        // Mobile-Ansicht: Sidebar schließen für manuelle Steuerung
+      //Set Sidebar accordingly
+      if (initialIsMobileView) {
         setIsSidebarOpen(false);
+      } else {
+        setIsSidebarOpen(true);
       }
-      return () => clearTimeout(timer); // Cleanup für setTimeout
-    };
 
-    // Event-Listener für Medienanfragen
-    desktopMediaQuery.addEventListener('change', handleMediaQueryChange);
+      
+      //Function for event listener in resize
+      const handleResize = () => {
+        setWindowWidth(window.innerWidth);
+      };
 
-    // Cleanup-Funktion für useEffect
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      desktopMediaQuery.removeEventListener('change', handleMediaQueryChange);
-    };
-  }, []); // Leeres Array bedeutet, der Effekt läuft nur einmal beim Mounten
+      //Event listener that checks if the window was resized and saves accordingly
+      window.addEventListener('resize', handleResize);
+
+      //Check for mobile Breakpoint
+      const desktopMediaQuery = window.matchMedia(`(min-width: ${DESKTOP_BREAKPOINT_PX}px)`);
+      const handleMediaQueryChange = (e: MediaQueryListEvent | MediaQueryList) => {
+        //Deactivate transistion on change
+        setDisableTransition(true);
+        //Use short timer until the transitions get activated again
+        const timer = setTimeout(() => {
+          setDisableTransition(false);
+        }, 50);
+        
+        if (e.matches) {
+          //Desktop
+          setIsSidebarOpen(true);
+        } else {
+          //Mobile
+          setIsSidebarOpen(false);
+        }
+        return () => clearTimeout(timer);
+      };
+      
+      //Event listener for mobile breakpoint
+      desktopMediaQuery.addEventListener('change', handleMediaQueryChange);
+
+      //Only show content when everythin has been setup
+      setIsContentReady(true)
+      
+      //Cleanup
+      return () => {
+        window.removeEventListener('resize', handleResize);
+        desktopMediaQuery.removeEventListener('change', handleMediaQueryChange);
+      };
+    }
+  }, []);
+
+  //Only show content, when it has been loaded
+  const contentVisibilityClass = isContentReady
+    ? 'opacity-100 transition-opacity duration-100 ease-out'
+    : 'opacity-0 pointer-events-none';
 
   return (
     <SidebarContext.Provider value={{ isSidebarOpen, toggleSidebar }}>
-      <div className={`flex h-screen ${isMobileView ? 'relative w-screen overflow-hidden' : ''}`}>
+      <div className={`flex h-screen ${isMobileView ? 'relative w-screen overflow-hidden' : ''} ${contentVisibilityClass}`}>
         {/* Sidebar */}
         <div
           className={`
@@ -79,7 +110,7 @@ export function SidebarProvider({ children, sidebarContent }: SidebarProviderPro
           {sidebarContent}
         </div>
 
-        {/* Hauptinhalt */}
+        {/* Main Content */}
         <div
           className={`
             h-full z-10 flex flex-col flex-grow
@@ -90,8 +121,10 @@ export function SidebarProvider({ children, sidebarContent }: SidebarProviderPro
             ${!isMobileView && !isSidebarOpen ? 'ml-0' : ''}
           `}
         >
+          {/* Div with rounded edges on left side */}
           <div
             className={`
+              relative
               flex-1 min-h-screen bg-cf-gray dark:bg-cf-text z-[0] 
               transition-colors duration-200 
               shadow-[-4px_0_80px_0px_rgba(3,36,67,0.24)]
@@ -99,6 +132,7 @@ export function SidebarProvider({ children, sidebarContent }: SidebarProviderPro
               rounded-l-3xl
             `}
           >
+            {/* Special class only for the dots in the Background */}
             <div
               className="absolute inset-0 z-[-1] transition-opacity duration-200"
               style={{
@@ -107,6 +141,7 @@ export function SidebarProvider({ children, sidebarContent }: SidebarProviderPro
                 backgroundPosition: '12px 12px',
                 opacity: 'var(--svg-opacity)'
               }} />
+            {/* Div for content from page.tsx */}
             <div className="relative w-full h-full p-4 pt-6 2xl:p-10 flex flex-col overflow-auto">
               {children}
             </div>
