@@ -13,6 +13,8 @@ const { validateEnv, env } = require('../config/env');
 const koiosApi = require('../services/koiosAPI');
 const rewardCalculator = require('../services/rewardCalculator');
 const localDataManager = require('../services/localDataManager');
+const CustomError = require('../utils/CustomError');
+const schedule = require('node-schedule')
 
 let globalServerData = {
     currentEpoch: null
@@ -53,10 +55,10 @@ async function initializeData() {
                 //Update is possible
                 console.log("Update is possible.")
 
-                //TODO!! Updating
-                await updateOnEpochChange(globalServerData.currentEpoch, loadedState, env.MODE)
+                //Generates new object with updatedData
+                const updatedData = await updateOnEpochChange(globalServerData.currentEpoch, loadedState, env.MODE)
 
-                await setGlobalServerData(loadedState, env.MODE)
+                await setGlobalServerData(updatedData, env.MODE)
 
                 await localDataManager.saveToJSON(globalServerData, `server_state_${env.MODE}_epoch_${globalServerData.currentEpoch}`);
 
@@ -78,8 +80,22 @@ async function initializeData() {
             }
         }
 
+        //Setup the scheduler to check if a new epoch has started every hour.
+        //If so, the server updates itself atomically
+
+        schedule.scheduleJob('0 * * * *', async () => {
+            console.log('--- Scheduled Job triggered: Hourly data check ---');
+            try {
+                await updateGlobalServerDataAtomically();
+            } catch (error) {
+                throw new Error ("Something went wrong during updating on epoch change. Please restart the server.")
+            }
+        });
+        console.log('Scheduler initialized: updateGlobalServerDataAtomically will run every hour on the hour.');
+
+
     } catch (error) {
-        throw new Error("Initializing data failed: " + error.message);
+        throw new CustomError("Server initialization failed.", error);
     }
 }
 
@@ -95,9 +111,13 @@ async function fetchSpecificDataForMode(mode) {
 
     //Parameters for all modes
     globalServerData.poolList = await koiosApi.getPoolList()
+
     globalServerData.poolHistoryOrderedByEpoch = await koiosApi.getPoolHistoryForENVPool();
+
     globalServerData.delegatorHistory = await koiosApi.getDelegatorHistoryForENVPool(globalServerData.currentEpoch)
+
     globalServerData.tokenomicStatsOrderedByEpoch = await koiosApi.getTokenomicStats()
+
     globalServerData.poolOwners = await koiosApi.getPoolOwnerHistoryForENVPool()
 
     //Parameters for calculator data in all modes
@@ -164,8 +184,17 @@ async function fetchSpecificDataForMode(mode) {
 
         case 'MEDIAN_MARGIN':
 
+            //Something goes wrong here
+            console.log("Fetching all pool margins...")
             globalServerData.allEpochsPoolMargins = await koiosApi.getPoolMarginsForAllEpochs(globalServerData.poolList)
+
+            console.log("Finished Fetching Margins. Calculating medians...")
+
             globalServerData.allEpochsMedianMargins = await rewardCalculator.calculateMedianMargins(globalServerData.allEpochsPoolMargins)
+
+            console.log("Finisched calculating medians. Calculating Rewards...")
+
+
 
             const medianMarginReward = await rewardCalculator.calculatePoolRewards(
                 globalServerData.allEpochsMedianMargins,
@@ -195,6 +224,45 @@ async function fetchSpecificDataForMode(mode) {
     }
 }
 
+/**
+ * This function attempts to update the loacally loaded and stored data if it detects an epoch change. 
+ * New data for the globalServerData object is generate via updateOnEpochChange,
+ * The data is swapped atomically to let the server continue running and serving data to clients.
+ * 
+ * @throws {Error} - if an error occurs during updating
+ */
+async function updateGlobalServerDataAtomically() {
+    console.log("Checking if update is necessary...")
+    try {
+        const fetchedCurrentEpoch = await koiosApi.getCurrentEpoch();
+
+        if (fetchedCurrentEpoch !== globalServerData.currentEpoch) {
+            console.log(`New epoch has started. Updating... (old epoch was: ${globalServerData.currentEpoch}, new epoch is: ${fetchedCurrentEpoch})`)
+
+            const newData = await updateOnEpochChange(fetchedCurrentEpoch, globalServerData, env.MODE)
+
+            //Atomic change
+            globalServerData = newData
+            await localDataManager.saveToJSON(globalServerData, `server_state_${env.MODE}_epoch_${globalServerData.currentEpoch}`)
+
+            console.log("Finished updating.")
+
+        } else {
+            console.log("Data on server is still up to date!")
+        }
+
+
+    } catch (error) {
+        throw new CustomError("Something went wrong during atomically updating the data on epoch change.", error)
+    }
+}
+
+/**
+ * Sets the global server data after fetching when first starting the server
+ * 
+ * @param {object} loadedState - the data to set
+ * @param {string} mode - the mode the server is running in
+ */
 async function setGlobalServerData(loadedState, mode) {
 
     //reward data
@@ -274,9 +342,14 @@ async function setGlobalServerData(loadedState, mode) {
     }
 }
 
+/**
+ * Used to start the server from outside this file
+ * 
+ * @param {object} appInstance - the server
+ */
 async function startApp(appInstance) {
 
-    await initializeData(); // Initialisiere die Daten des Servers
+    await initializeData();
 
 }
 
@@ -288,9 +361,13 @@ async function startApp(appInstance) {
  * - If so, its margin is used to calculate the new median
  * - The new margins get added to the localy stored files
  * 
+ * Uses an atomic change so no wrong data gets send to the clients when an epoch update happens.
+ * First changes the loadedState data in an new memory part and then atomically changes the pointer to that part
+ * 
  * @throws {Error} if no pool data could be accuired when fetching it new from KOIOS
  * @throws {Error} if something went wrong and the margins array is empty
  * @throws {Error} if a wrong mode is set in .env
+ * @returns {newDataSet} the updatedData
  */
 async function updateOnEpochChange(currentEpoch, loadedState, mode) {
     //When updated the epoch to calculate should be currentEpoch - 2
@@ -322,58 +399,66 @@ async function updateOnEpochChange(currentEpoch, loadedState, mode) {
 
     console.log("Updating to epoch: " + currentEpoch)
 
+    const newDataSet = {
+        currentEpoch: currentEpoch
+    }
+
+
+
     //Parameters for all modes
-    loadedState.poolList = await koiosApi.getPoolList()
-    loadedState.poolHistoryOrderedByEpoch = await koiosApi.getPoolHistoryForENVPool();
+    newDataSet.poolList = await koiosApi.getPoolList()
+    newDataSet.poolHistoryOrderedByEpoch = await koiosApi.getPoolHistoryForENVPool();
 
-    //TODO!! Test this 
-    const newDelegatorHistory = koiosApi.getDelegatorHistoryForSpecificEpoch(currentEpoch)
-    loadedState.delegatorHistory.push(newDelegatorHistory)
+    const newDelegatorHistory = await koiosApi.getDelegatorHistoryForSpecificEpoch(currentEpoch)
 
-    loadedState.tokenomicStatsOrderedByEpoch = await koiosApi.getTokenomicStats()
-    loadedState.poolOwners = await koiosApi.getPoolOwnerHistoryForENVPool()
+    //For atomic step
+    newDataSet.delegatorHistory = loadedState.delegatorHistory
+    newDataSet.delegatorHistory.push(newDelegatorHistory)
+
+    newDataSet.tokenomicStatsOrderedByEpoch = await koiosApi.getTokenomicStats()
+    newDataSet.poolOwners = await koiosApi.getPoolOwnerHistoryForENVPool()
 
     //Parameters for calculator data in all modes
-    loadedState.calculatorData = {}
-    loadedState.calculatorData.mode = mode
+    newDataSet.calculatorData = {}
+    newDataSet.calculatorData.mode = mode
 
     //All from history
-    loadedState.calculatorData.epoch_no = loadedState.poolHistoryOrderedByEpoch[currentEpoch - 2].epoch_no
-    loadedState.calculatorData.active_stake = loadedState.poolHistoryOrderedByEpoch[currentEpoch - 2].active_stake
-    loadedState.calculatorData.active_stake_pct = loadedState.poolHistoryOrderedByEpoch[currentEpoch - 2].active_stake_pct
-    loadedState.calculatorData.saturation_pct = loadedState.poolHistoryOrderedByEpoch[currentEpoch - 2].saturation_pct
-    loadedState.calculatorData.block_cnt = loadedState.poolHistoryOrderedByEpoch[currentEpoch - 2].block_cnt
-    loadedState.calculatorData.delegator_cnt = loadedState.poolHistoryOrderedByEpoch[currentEpoch - 2].delegator_cnt
-    loadedState.calculatorData.fixed_cost = loadedState.poolHistoryOrderedByEpoch[currentEpoch - 2].fixed_cost
-    loadedState.calculatorData.pool_fees = loadedState.poolHistoryOrderedByEpoch[currentEpoch - 2].pool_fees
-    loadedState.calculatorData.deleg_rewards = loadedState.poolHistoryOrderedByEpoch[currentEpoch - 2].deleg_rewards
-    loadedState.calculatorData.member_rewards = loadedState.poolHistoryOrderedByEpoch[currentEpoch - 2].member_rewards
-    loadedState.calculatorData.epoch_ros = loadedState.poolHistoryOrderedByEpoch[currentEpoch - 2].epoch_ros
+    newDataSet.calculatorData.epoch_no = newDataSet.poolHistoryOrderedByEpoch[currentEpoch - 2].epoch_no
+    newDataSet.calculatorData.active_stake = newDataSet.poolHistoryOrderedByEpoch[currentEpoch - 2].active_stake
+    newDataSet.calculatorData.active_stake_pct = newDataSet.poolHistoryOrderedByEpoch[currentEpoch - 2].active_stake_pct
+    newDataSet.calculatorData.saturation_pct = newDataSet.poolHistoryOrderedByEpoch[currentEpoch - 2].saturation_pct
+    newDataSet.calculatorData.block_cnt = newDataSet.poolHistoryOrderedByEpoch[currentEpoch - 2].block_cnt
+    newDataSet.calculatorData.delegator_cnt = newDataSet.poolHistoryOrderedByEpoch[currentEpoch - 2].delegator_cnt
+    newDataSet.calculatorData.fixed_cost = newDataSet.poolHistoryOrderedByEpoch[currentEpoch - 2].fixed_cost
+    newDataSet.calculatorData.pool_fees = newDataSet.poolHistoryOrderedByEpoch[currentEpoch - 2].pool_fees
+    newDataSet.calculatorData.deleg_rewards = newDataSet.poolHistoryOrderedByEpoch[currentEpoch - 2].deleg_rewards
+    newDataSet.calculatorData.member_rewards = newDataSet.poolHistoryOrderedByEpoch[currentEpoch - 2].member_rewards
+    newDataSet.calculatorData.epoch_ros = newDataSet.poolHistoryOrderedByEpoch[currentEpoch - 2].epoch_ros
 
     //currentEpoch - 2
     const epochHistory = await koiosApi.getEpochHistory(currentEpoch - 2)
-    loadedState.calculatorData.fees = epochHistory[0].fees
-    loadedState.calculatorData.total_block_count = epochHistory[0].blk_count
-    loadedState.calculatorData.total_active_stake = epochHistory[0].active_stake
+    newDataSet.calculatorData.fees = epochHistory[0].fees
+    newDataSet.calculatorData.total_block_count = epochHistory[0].blk_count
+    newDataSet.calculatorData.total_active_stake = epochHistory[0].active_stake
 
     //currentEpoch - 1
-    loadedState.calculatorData.reserves = loadedState.tokenomicStatsOrderedByEpoch[currentEpoch - 1].reserves
+    newDataSet.calculatorData.reserves = newDataSet.tokenomicStatsOrderedByEpoch[currentEpoch - 1].reserves
 
     //currentEpoch
     const currentProtocolParameters = await koiosApi.getProtocolParameters(currentEpoch)
-    loadedState.calculatorData.influence = currentProtocolParameters[0].influence
-    loadedState.calculatorData.decentralisation = currentProtocolParameters[0].decentralisation
-    loadedState.calculatorData.optimal_pool_count = currentProtocolParameters[0].optimal_pool_count
-    loadedState.calculatorData.monetary_expand_rate = currentProtocolParameters[0].monetary_expand_rate
-    loadedState.calculatorData.treasury_growth_rate = currentProtocolParameters[0].treasury_growth_rate
+    newDataSet.calculatorData.influence = currentProtocolParameters[0].influence
+    newDataSet.calculatorData.decentralisation = currentProtocolParameters[0].decentralisation
+    newDataSet.calculatorData.optimal_pool_count = currentProtocolParameters[0].optimal_pool_count
+    newDataSet.calculatorData.monetary_expand_rate = currentProtocolParameters[0].monetary_expand_rate
+    newDataSet.calculatorData.treasury_growth_rate = currentProtocolParameters[0].treasury_growth_rate
 
     //TODO!! better fetched over /pool_updates for currentEpoch - 2
     const currentPoolInfo = await koiosApi.getPoolInfo(env.POOL_ID)
-    loadedState.calculatorData.pledge = currentPoolInfo[0].pledge
+    newDataSet.calculatorData.pledge = currentPoolInfo[0].pledge
 
     const genesisInfo = await koiosApi.getGenesisInfo()
-    loadedState.calculatorData.active_slot_coeff = genesisInfo[0].activeslotcoeff
-    loadedState.calculatorData.epoch_length_in_slots = genesisInfo[0].epochlength
+    newDataSet.calculatorData.active_slot_coeff = genesisInfo[0].activeslotcoeff
+    newDataSet.calculatorData.epoch_length_in_slots = genesisInfo[0].epochlength
 
 
 
@@ -385,18 +470,18 @@ async function updateOnEpochChange(currentEpoch, loadedState, mode) {
 
             const customMarginReward = await rewardCalculator.calculatePoolRewards(
                 env.CUSTOM_MARGIN,
-                loadedState.currentEpoch,
-                loadedState.poolHistoryOrderedByEpoch,
-                loadedState.delegatorHistory,
-                loadedState.tokenomicStatsOrderedByEpoch,
-                loadedState.poolOwners)
+                newDataSet.currentEpoch,
+                newDataSet.poolHistoryOrderedByEpoch,
+                newDataSet.delegatorHistory,
+                newDataSet.tokenomicStatsOrderedByEpoch,
+                newDataSet.poolOwners)
 
             //For reward
-            loadedState.delegatorRewardData = customMarginReward.rewardData
-            loadedState.ownerRewardData = customMarginReward.ownerRewardData
+            newDataSet.delegatorRewardData = customMarginReward.rewardData
+            newDataSet.ownerRewardData = customMarginReward.ownerRewardData
 
             //For calculatorData
-            loadedState.calculatorData.margin = env.CUSTOM_MARGIN
+            newDataSet.calculatorData.margin = env.CUSTOM_MARGIN
             break;
 
         case 'MEDIAN_MARGIN':
@@ -410,24 +495,24 @@ async function updateOnEpochChange(currentEpoch, loadedState, mode) {
             let margins = [];
 
             //If a pool from pool list, that is not retired has built a block in that epoch
-            for (let i = 0; i < loadedState.poolList.length; i++) {
+            for (let i = 0; i < newDataSet.poolList.length; i++) {
                 //If pool is currently (two epochs after searched epoch) retired and did retire before or during the searched for epoch
-                if (loadedState.poolList[i].pool_status === 'retired' && loadedState.poolList[i].retiring_epoch <= currentEpoch - 2) {
+                if (newDataSet.poolList[i].pool_status === 'retired' && newDataSet.poolList[i].retiring_epoch <= currentEpoch - 2) {
                     continue;
                 } else {
                     //Check if the pool did build a block in the searched for epoch
                     for (let x = 0; x < blocks.length; x++) {
                         //If a block was build by the currently watched pool
-                        if (blocks[x].pool === loadedState.poolList[i].pool_id_bech32) {
+                        if (blocks[x].pool === newDataSet.poolList[i].pool_id_bech32) {
                             //Check for margin
                             //If margin was changed before or during current epoch, the margin in pool list should be up to date
-                            if (loadedState.poolList[i].active_epoch_no <= currentEpoch - 2) {
+                            if (newDataSet.poolList[i].active_epoch_no <= currentEpoch - 2) {
                                 //console.log("Can use margin from pool list.")
-                                margins.push(loadedState.poolList[i].margin)
+                                margins.push(newDataSet.poolList[i].margin)
                                 break;
                                 //If pool was updated after currentEpoch - 2, the value in pool List is not up to date and must be fetched manually
                             } else {
-                                let poolData = await koiosApi.getPoolHistoryForSpecificEpochAndSpecificPool(currentEpoch - 2, loadedState.poolList[i].pool_id_bech32)
+                                let poolData = await koiosApi.getPoolHistoryForSpecificEpochAndSpecificPool(currentEpoch - 2, newDataSet.poolList[i].pool_id_bech32)
 
                                 if (!poolData) {
                                     throw new Error('No pool data was acquired.')
@@ -447,7 +532,9 @@ async function updateOnEpochChange(currentEpoch, loadedState, mode) {
             }
 
             //Update the all margins array
-            loadedState.allEpochsPoolMargins.push(margins)
+            //For atomic step
+            newDataSet.allEpochsPoolMargins = loadedState.allEpochsPoolMargins
+            newDataSet.allEpochsPoolMargins.push(margins)
 
             //Calcualte median for the new epoch
 
@@ -462,32 +549,38 @@ async function updateOnEpochChange(currentEpoch, loadedState, mode) {
             }
 
             //Update the median margin array
-            loadedState.allEpochsMedianMargins.push(median)
+            //For atmoic step
+            newDataSet.allEpochsMedianMargins = loadedState.allEpochsMedianMargins
+            newDataSet.allEpochsMedianMargins.push(median)
 
             //Recalculate the rewards
             const medianMarginReward = await rewardCalculator.calculatePoolRewards(
-                loadedState.allEpochsMedianMargins,
-                loadedState.currentEpoch,
-                loadedState.poolHistoryOrderedByEpoch,
-                loadedState.delegatorHistory,
-                loadedState.tokenomicStatsOrderedByEpoch,
-                loadedState.poolOwners)
+                newDataSet.allEpochsMedianMargins,
+                newDataSet.currentEpoch,
+                newDataSet.poolHistoryOrderedByEpoch,
+                newDataSet.delegatorHistory,
+                newDataSet.tokenomicStatsOrderedByEpoch,
+                newDataSet.poolOwners)
 
             //For reward
-            loadedState.delegatorRewardData = medianMarginReward.rewardData
-            loadedState.ownerRewardData = medianMarginReward.ownerRewardData
+            newDataSet.delegatorRewardData = medianMarginReward.rewardData
+            newDataSet.ownerRewardData = medianMarginReward.ownerRewardData
 
             //For calculatorData
-            loadedState.calculatorData.margin = loadedState.allEpochsMedianMargins[currentEpoch - 2]
+            newDataSet.calculatorData.margin = newDataSet.allEpochsMedianMargins[currentEpoch - 2]
             break;
 
         case 'PERCENTAGE':
             console.log("Updating percentage rewards...")
-            //TODO!! Implement the percentage calculation
+        //TODO!! Implement the percentage calculation
 
         default:
             throw new Error("Given mode is not setup correctly.")
+
+
     }
+
+    return newDataSet;
 }
 
 /**
@@ -499,6 +592,8 @@ async function getGlobalServerData() {
 
     return globalServerData;
 }
+
+
 
 module.exports = {
     startApp,

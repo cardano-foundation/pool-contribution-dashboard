@@ -105,6 +105,6 @@ export type BarChartData = {
 
 export type ExchangeValue = {
     cardano: {
-        usd: number
+        usd: string
     }
 }

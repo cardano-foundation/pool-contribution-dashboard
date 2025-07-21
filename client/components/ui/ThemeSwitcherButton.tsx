@@ -1,9 +1,24 @@
+/**
+ * @file Allows toggling between light and dark mode in the theme context
+ * @author Max Grützmacher max.gruetzmacher@cardanofoundation.org
+ * @date 2025-07-21
+ * @version 1.0.0
+ * @module Client
+ * @license MIT
+ */
+
 'use client';
 
 import React from 'react';
 import { useTheme } from '@/app/context/themeContext';
 import { SunIcon, MoonIcon } from '@phosphor-icons/react';
 
+/**
+ * A button component that allows users to toggle between light and dark themes.
+ * It uses the `useTheme` hook to access and update the current theme.
+ *
+ * @returns {JSX.Element} The rendered theme switcher button.
+ */
 export function ThemeSwitcherButton() {
     const { theme, toggleTheme } = useTheme();
 

@@ -1,9 +1,24 @@
+/**
+ * @file Allows fetching specific data that gets accessed via hooks from useData.ts
+ * @author Max Grützmacher max.gruetzmacher@cardanofoundation.org
+ * @date 2025-07-21
+ * @version 1.0.0
+ * @module Client
+ * @license MIT
+ */
+
 import axios, { AxiosResponse } from "axios";
 
 import {ExchangeValue, CachedData, RewardDataArray, PoolHistory} from "@/types/types"; 
 
-//In here you should be able to fetch the whole reward data list for all epochs and also use filtering functions in the app.
-
+/**
+ * Fetches reward data for all epochs.
+ * It first attempts to load data from local storage. If not found or if the stored data is outdated
+ * (based on the current epoch), it fetches new data from the API and caches it in local storage.
+ *
+ * @returns {Promise<RewardDataArray>} A promise that resolves with the array of reward data.
+ * @throws {Error} If `NEXT_PUBLIC_LOCAL_STORAGE_KEY` is not defined or if data loading from the server fails.
+ */
 export async function fetchRewardDataForAllEpochs() : Promise<RewardDataArray> {
   try {
 
@@ -14,14 +29,9 @@ export async function fetchRewardDataForAllEpochs() : Promise<RewardDataArray> {
     //Fetch epoch to check if localStorage is up to date
     const currentEpoch = (await axios.get<string>(`${process.env.NEXT_PUBLIC_API_URL}/api/get-current-epoch`)).data
 
-    console.log(currentEpoch)
-
     //Try to load the reward data from local storage
     //const storedRewardData: string | null = localStorage.getItem(process.env.NEXT_PUBLIC_LOCAL_STORAGE_KEY)
     const storedRewardData: string | null = null
-
-    //TODO!! Something goes wrong here
-    console.log(typeof storedRewardData)
 
     //If not found, fetch new
     if (storedRewardData === null) {
@@ -75,7 +85,14 @@ export async function fetchRewardDataForAllEpochs() : Promise<RewardDataArray> {
   }
 }
 
-//TODO!! renaming
+/**
+ * Fetches pool history data specifically for the calculator component.
+ *
+ * @returns {Promise<PoolHistory>} A promise that resolves with the pool history data.
+ * @throws {Error} If data loading from the server fails.
+ *
+ * @todo Rename this function to be more descriptive of what "calculator data" entails.
+ */
 export async function fetchCalculatorData(): Promise<PoolHistory> {
   try {
     const calculatorData = (await axios.get<PoolHistory>(`${process.env.NEXT_PUBLIC_API_URL}/api/get-calculator-data`)).data
@@ -85,9 +102,18 @@ export async function fetchCalculatorData(): Promise<PoolHistory> {
   }
 }
 
+/**
+ * Fetches the current exchange rate between Cardano (ADA) and US Dollar (USD) from CoinGecko.
+ *
+ * @returns {Promise<ExchangeValue>} A promise that resolves with the exchange rate value.
+ * @throws {Error} If the exchange rate cannot be fetched (e.g., due to API issues or rate limits).
+ *
+ * @remarks This function relies on an external API (CoinGecko) and might be subject to rate limits or availability issues.
+ */
 export async function fetchCurrentAdaDollarRate(): Promise<ExchangeValue> {
   try {
     const currentRate = (await axios.get<ExchangeValue>("https://api.coingecko.com/api/v3/simple/price?ids=cardano&vs_currencies=usd")).data
+    //console.log("current exchange rate: " + currentRate.cardano.usd)
     return currentRate
   } catch (error) {
     throw new Error("Could not fetch current exchange rate.")

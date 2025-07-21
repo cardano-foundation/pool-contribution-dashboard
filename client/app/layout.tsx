@@ -1,14 +1,36 @@
+/**
+ * @file Root of the next.js project. Surpresses hydration warning for light/dark mode
+ * @author Max Grützmacher max.gruetzmacher@cardanofoundation.org
+ * @date 2025-07-21
+ * @version 1.0.0
+ * @module Client
+ * @license MIT
+ */
+
 import type { Metadata } from "next";
 import "./globals.css";
 import SidebarLink from '@/components/ui/SidebarLink';
 import { SidebarProvider } from "@/components/ui/SidebarProvider";
 import { ThemeProvider } from "@/components/ui/ThemeProvider";
+import { CurrencyProvider } from "@/components/ui/CurrencyProvider";
 
+/**
+ * Metadata for the entire application.
+ * This object defines the title and description that appear in the browser tab and search engine results.
+ */
 export const metadata: Metadata = {
   title: "Cardano Reward Dahsboard",
   description: "Gives insights about Cardano stake pool rewards for the 100% margin pool by the UNHCR.",
 };
 
+/**
+ * The root layout component for the Next.js application.
+ * This component wraps all pages and provides global elements like HTML structure,
+ * theme initialization, and context providers for sidebar, theme, and currency.
+ *
+ * @param {Readonly<{ children: React.ReactNode }>} { children } - React children to be rendered within the layout.
+ * @returns {JSX.Element} The root HTML structure of the application.
+ */
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -37,9 +59,7 @@ export default function RootLayout({
       </head>
       <body className="bg-cf-gray dark:bg-cf-text transition-colors duration-200">
         <ThemeProvider>
-
           <SidebarProvider sidebarContent={
-
             <div>
               <h2 className="text-3xl text-cf-text dark:text-cf-gray transition-colors duration-200 mt-2 mb-6 pl-4">Dashboard</h2>
               <nav>
@@ -49,15 +69,13 @@ export default function RootLayout({
                   <SidebarLink href="/delegator">Delegator</SidebarLink>
                 </ul>
               </nav>
-
             </div>
-
-
           }>
-            {children}
+            <CurrencyProvider>
+              {children}
+            </CurrencyProvider>
           </SidebarProvider>
         </ThemeProvider>
-
       </body>
     </html>
   );

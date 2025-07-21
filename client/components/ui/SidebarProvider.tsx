@@ -1,8 +1,23 @@
+/**
+ * @file Allows page.tsx files to be displayed with a sidebar
+ * @author Max Grützmacher max.gruetzmacher@cardanofoundation.org
+ * @date 2025-07-21
+ * @version 1.0.0
+ * @module Client
+ * @license MIT
+ */
+
 'use client';
 
 import React, { useEffect, useState } from 'react';
 import { SidebarContext } from '@/app/context/sidebarContext';
 
+/**
+ * Defines the props for the SidebarProvider component.
+ * @interface SidebarProviderProps
+ * @property {React.ReactNode} children - The main content of the application that will be rendered alongside the sidebar.
+ * @property {React.ReactNode} sidebarContent - The content to be displayed inside the sidebar.
+ */
 interface SidebarProviderProps {
   children: React.ReactNode;
   sidebarContent: React.ReactNode;
@@ -13,6 +28,14 @@ const SIDEBAR_WIDTH_PX = 256;
 //Taiwlind 2xl for mobile breakpoint
 const DESKTOP_BREAKPOINT_PX = 1536;
 
+
+/**
+ * Provides a context for managing sidebar state and responsiveness.
+ * It dynamically adjusts sidebar visibility based on window width and user interaction.
+ *
+ * @param {SidebarProviderProps} { children, sidebarContent } - Props for the component.
+ * @returns {JSX.Element} A React component that wraps the application content and sidebar.
+ */
 export function SidebarProvider({ children, sidebarContent }: SidebarProviderProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [windowWidth, setWindowWidth] = useState<number>(0);

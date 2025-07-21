@@ -13,6 +13,7 @@ dotenv.config()
 const app = require('./src/app');
 const { startApp } = require('./src/initialization/appManager');
 const { env } = require('./src/config/env');
+const CustomError = require('./src/utils/CustomError');
 
 const PORT = env.PORT;
 const IP = env.IP;
@@ -26,7 +27,15 @@ startApp(app)
         });
     })
     .catch(error => {
-        console.error('Error while starting server:', error);
+        if (error instanceof CustomError) {
+            console.error(`Error: ${error.message}`);
+            console.error(error.stack);
+            if (error.originalError) {
+                console.error(`Original Fehlertyp: ${error.originalError.name}`);
+            }
+        } else {
+            console.error('Error while starting server:', error);
+        }
         process.exit(1);
     });
 

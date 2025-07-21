@@ -1,7 +1,30 @@
+/**
+ * @file Draws a bar chart based on recharts
+ * @author Max Grützmacher max.gruetzmacher@cardanofoundation.org
+ * @date 2025-07-21
+ * @version 1.0.0
+ * @module Client
+ * @license MIT
+ */
+
 "use client"
 
-import { BarChartData } from '@/types/types';
+import { BarChartData, ExchangeValue } from '@/types/types';
 import { BarChart, Bar, Rectangle, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { useCurrency } from '@/app/context/currencyContext';
+import { useTheme } from '@/app/context/themeContext';
+import styles from './simpleBarChart.module.css';
+
+/**
+ * Props for the SimpleBarChart component.
+ * @interface BarChartProps
+ * @property {BarChartData[]} values - An array of data objects for the bar chart, each containing `epoch` and `reward`.
+ * @property {ExchangeValue} exchangeRate - The current exchange rate, though it's noted as not directly used for display in the current formatter.
+ */
+interface BarChartProps {
+  values: BarChartData[];
+  exchangeRate: ExchangeValue;
+}
 
 const formatLargeNumber = (num: number): string => {
   if (num >= 1000) {
@@ -10,45 +33,79 @@ const formatLargeNumber = (num: number): string => {
   return num.toString();
 };
 
-export default function simpleBarChart({values}: {values: BarChartData[]}) {
-  return ( 
+/**
+ * A responsive bar chart component that visualizes reward data per epoch.
+ * It integrates with `useCurrency` and `useTheme` contexts to adapt its display
+ * based on the selected currency (ADA or USD) and theme (light or dark).
+ *
+ * @param {BarChartProps} { values, exchangeRate } - Props for the component.
+ * @returns {JSX.Element} A React component rendering a bar chart.
+ */
+export default function simpleBarChart({ values, exchangeRate }: BarChartProps) {
+
+  const { currency } = useCurrency();
+  const { theme } = useTheme();
+
+  const customFormatter = (value: number) => {
+    if (currency === "ada") {
+      return [`${value.toLocaleString()} ₳`];
+    } else {
+      return [`${value.toLocaleString()} $`];
+    }
+  };
+
+  const cursorClass = theme === "light" ? styles.cursorLight : styles.cursorDark;
+  const tickClass = theme === "light" ? styles.tickLight : styles.tickDark;
+
+  //Change cursor stle depending on theme from themeContext
+  const cursorStyle = {
+    className: cursorClass,
+    strokeWidth: 1
+  }
+
+  const tickStyle = {
+    className: tickClass,
+    fontSize: 13
+  }
+
+  return (
     <div className="w-full h-65 px-2">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={values}
         >
-          <CartesianGrid stroke="#e0e0e0" vertical={false} />
+          <CartesianGrid vertical={false} />
 
           <XAxis
             dataKey="epoch"
             tickLine={false}
             axisLine={false}
-            interval={5}
-            tick={{ fill: '#6b7280', fontSize: 13 }}
+            interval={"preserveEnd"}
+            tick={tickStyle}
             height={20}
           />
 
           <YAxis
             tickLine={false}
             axisLine={false}
-            tick={{ fill: '#6b7280', fontSize: 13 }}
+            tick={tickStyle}
             tickFormatter={formatLargeNumber}
             width={20}
           />
 
           <Tooltip
-            cursor={{ fill: '#E3E3E3', strokeWidth: 1 }}
+            cursor={cursorStyle}
             contentStyle={{
-              backgroundColor: 'rgba(255, 255, 255, 0.95)',
+              backgroundColor: 'var(--recharts-tooltip-bg)',
               borderRadius: '0.75rem',
               border: '0px',
               padding: '0.75rem',
-              boxShadow: '0 14px 50px rgba(3,36,67,0.1)'
+              boxShadow: '0 8px 10px rgba(3,36,67,0.2)'
             }}
-            labelStyle={{ color: '#374151', fontWeight: 'bold', fontSize: 14 }}
-            itemStyle={{ color: '#4b5563', fontSize: 13 }}
+            labelStyle={{ color: 'var(--recharts-tooltip-text-title)', fontSize: 13 }}
+            itemStyle={{ color: 'var(--recharts-tooltip-text)', fontWeight: 'bold', fontSize: 14 }}
             labelFormatter={(label: string | number) => `Epoch: ${label}`}
-            formatter={(value: number, name: string) => [`${value.toLocaleString()} Ada`]}
+            formatter={customFormatter}
           />
 
           <Bar

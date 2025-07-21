@@ -13,6 +13,7 @@
 const koiosAxios = require('../config/axiosInstance');
 const { getViaAxiosPaginated } = require('../utils/helper');
 const { env } = require('../config/env');
+const CustomError = require('../utils/CustomError');
 
 /**
  * Returns the current epoch number from KOIOS
@@ -131,7 +132,10 @@ async function getPoolMarginsForAllEpochs(poolList) {
             console.log("Fetching pool " + (i + 1) + "/" + (poolList.length) + "...")
 
             //Save the history of every single pool (Contains the margin in every epoch that the pool was active in)
-            let historyList = await koiosAxios.get(`${env.API_URL}/pool_history?_pool_bech32=${poolList[i].pool_id_bech32}`)
+            let historyList = await getViaAxiosPaginated(`${env.API_URL}/pool_history?_pool_bech32=${poolList[i].pool_id_bech32}`, "no_check")
+
+            //DEBUG!!
+            console.log("Current pool was active in " + historyList.length + " epochs.")
 
             if (!historyList) {
                 throw new Error('Recieved pool history list in epoch ' + i + " was empty or false.")
@@ -171,12 +175,14 @@ async function getPoolMarginsForAllEpochs(poolList) {
             }
         }
 
+        console.log("There are " + epochList.length + " pools with margins in total")
+
         return epochList;
 
 
     } catch (apiErr) {
 
-        throw new Error('Failed to recieve pool list data from KOIOS.', apiErr.message)
+        throw new CustomError('Failed to recieve pool list data from KOIOS.', apiErr)
 
     }
 }
@@ -238,6 +244,10 @@ async function getDelegatorHistoryForENVPool(currentEpoch) {
         }
 
         delegatorHistoryList[i] = currentDelegatorList
+    }
+
+    if (delegatorHistoryList.length === 0) {
+        throw new Error ("The recieved delegator list was empty.")
     }
 
     return delegatorHistoryList

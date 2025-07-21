@@ -13,10 +13,21 @@
   --font-switzer: 'Switzer', sans-serif;
   /*Handles the opacity for the svg in the background for dark/lightmode*/
   --svg-opacity: 1;
+  /*Handles color of the grid in the simpleBarChart*/
+  --recharts-grid-stroke: #e0e0e0;
+  /*Variables for the tooltip in rechart*/
+  --recharts-tooltip-bg: #FbFbFbf2;
+  --recharts-tooltip-text-title: #404040;
+  --recharts-tooltip-text: oklch(0.627 0.194 149.214);
 }
 
 html.dark {
   --svg-opacity: 0.1;
+  --recharts-grid-stroke: #6b7280;
+
+  --recharts-tooltip-bg: #494949e8;
+  --recharts-tooltip-text-title: #F2F2F2;
+  --recharts-tooltip-text: oklch(0.627 0.194 149.214);
 }
 
 @theme inline {
@@ -29,4 +40,9 @@ html.dark {
 
 body {
   font-family: var(--font-switzer);
+}
+
+.recharts-cartesian-grid line {
+  stroke: var(--recharts-grid-stroke);
+  transition: stroke 0.2s;
 }

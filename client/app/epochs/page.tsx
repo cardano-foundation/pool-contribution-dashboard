@@ -1,53 +1,93 @@
+/**
+ * @file Page.tsx for /epochs. Displays the delegators grouped regarding rewards and count. Also shows a table containing all delegators of the current epoch.
+ * @author Max Grützmacher max.gruetzmacher@cardanofoundation.org
+ * @date 2025-07-21
+ * @version 1.0.0
+ * @module Client
+ * @license MIT
+ */
+
 "use client";
 
-import SimpleLineGraph from "@/components/forms/simpleLineGraph";
-import {useRewardData, useCalculatorData} from "@/components/hooks/useData";
-import OverviewCard from '@/components/ui/OverviewCard';
-import AllTimeCard from '@/components/ui/AllTimeCard';
-import CallculatorCard from '@/components/ui/CalculatorCard';
-import TopDelegatorCard from '@/components/ui/TopDelegatorCard';
+import { useRewardData, useExchangeRate } from "@/components/hooks/useData";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { BurgerMenuButton } from '@/components/ui/BurgerMenuButton';
+import { ThemeSwitcherButton } from "@/components/ui/ThemeSwitcherButton";
+import { CurrencySwitcherButton } from '@/components/ui/CurrencySwitcherButton'
+import { EpochProvider } from '@/components/ui/EpochProvider';
+import EpochControls from '@/components/ui/EpochControls'
+import { EpochCounter } from "@/components/ui/EpochCounter";
+import { EpochOverviewCard } from "@/components/ui/EpochOverviewCard";
+import { EpochRewardOverviewCard } from "@/components/ui/EpochRewardOverviewCard"
+import PaginatedDelegatorCard from "@/components/ui/PaginatedDelegatorCard"
 
-export default function Home() {
+/**
+ * The `Epochs` component provides a detailed view of Cardano staking rewards,
+ * allowing users to navigate through different epochs and see associated data.
+ * It handles data fetching, loading states, and error displays, integrating
+ * various UI components for a comprehensive user experience.
+ *
+ * @returns {JSX.Element} A React component displaying epoch-specific reward data.
+ */
+export default function Epochs() {
 
   const { rewardData, rewardLoading, rewardError } = useRewardData();
-  const {calculatorData, calculatorLoading, calculatorError} = useCalculatorData();
-  const calculatorCollection = {calculatorData, calculatorLoading, calculatorError}
 
-  if (rewardLoading) return <LoadingSpinner
-            bigCircleDiameter={100}
-            smallCircleDiameter={90}
-            animationDuration={1}
-          />;
+  //Fetch exchangeRate
+
+  const { rate, rateError, rateLoading } = useExchangeRate();
+
+  if (rewardLoading || rateLoading) return <LoadingSpinner
+    bigCircleDiameter={100}
+    smallCircleDiameter={90}
+    animationDuration={1}
+  />;
   if (rewardError) return <p>Error while loading data: {rewardError}</p>;
+  if (rateError) return <p>Error while fetching current exchange rate: {rateError}</p>
   if (!rewardData) return <p>No data found</p>;
-   
+  if (!rate) return <p>No exchange rate data recieved</p>
+
   return (
     <div className="flex flex-col h-full">
-      <div className="mb-6 flex">
-        <BurgerMenuButton></BurgerMenuButton>
-        <h1 className="text-3xl text-cf-text flex items-center justify-center ml-3 2xl:ml-0">Overview</h1>
-      </div>
-      <div className="grid grid-cols-1 gap-6 pb-8 2xl:pb-0 2xl:grid-cols-3 flex-grow">
 
-        <OverviewCard title="Rewards" className="2xl:col-span-1" data={rewardData}>
-          {null}
-        </OverviewCard>
+      <EpochProvider initialEpoch={rewardData.length - 1} minEpoch={389} maxEpoch={rewardData.length - 1}>
+        <div className="mb-6 flex items-center">
+          <BurgerMenuButton></BurgerMenuButton>
 
-        <AllTimeCard title="All time" scrollable={true} className="2xl:col-span-2" data={rewardData}>
-          {null}
-        </AllTimeCard>
+          <EpochCounter></EpochCounter>
+          <div className="ml-auto">
+          </div>
+          <div className="ml-auto">
+            <div className="flex flex-row gap-3">
+              <ThemeSwitcherButton />
+            </div>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 gap-6 pb-8 2xl:mb-4 2xl:pb-0 2xl:grid-cols-[1fr_2fr] flex-grow">
 
-        <CallculatorCard title="Reward Calculator" className="2xl:col-span-1" height="min-h-90" data={calculatorCollection}>
-          {null}
-        </CallculatorCard>
+          <EpochOverviewCard className="2xl:col-span-1 h-full" title="Grouped Delegator Count" data={rewardData}>
+            {null}
+          </EpochOverviewCard>
 
-        <TopDelegatorCard title="Top 5 Delegator" scrollable={true} className="2xl:col-span-2" height="min-h-90" data={rewardData}>
-          {null}
-        </TopDelegatorCard>
+          <PaginatedDelegatorCard
+            scrollable={true}
+            className="2xl:col-span-1 2xl:row-span-2 h-full"
+            height="min-h-90"
+            title="Grouped Rewards"
+            data={rewardData}
+            exchangeRate={rate}
+          >
+            {null}
+          </PaginatedDelegatorCard>
 
-      </div>
+          <EpochRewardOverviewCard className="2xl:col-span-1 h-full" title="Grouped Rewards" data={rewardData}>
+            {null}
+          </EpochRewardOverviewCard>
+
+        </div>
+        <EpochControls />
+      </EpochProvider>
+
     </div>
   );
 }

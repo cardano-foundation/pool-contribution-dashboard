@@ -1,0 +1,19 @@
+.cursorLight {
+    fill: #E3E3E3;
+    transition: fill 0.2s;
+}
+
+.cursorDark {
+    fill: #3a3a3a;
+    transition: fill 0.2s;
+}
+
+.tickLight {
+    fill: '#6b7280';
+    transition: fill 0.2s;
+}
+
+.tickDark {
+    fill: '#99a1af';
+    transition: fill 0.2s;
+}

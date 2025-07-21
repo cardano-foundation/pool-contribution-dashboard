@@ -1,14 +1,35 @@
+/**
+ * @file Used to display links in the sidebar
+ * @author Max Grützmacher max.gruetzmacher@cardanofoundation.org
+ * @date 2025-07-21
+ * @version 1.0.0
+ * @module Client
+ * @license MIT
+ */
+
 'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import React from 'react';
 
+/**
+ Props for the SidebarLink component.
+ * @interface SidebarLinkProps
+ * @property {string} href - The URL the link points to.
+ * @property {React.ReactNode} children - The content to be rendered inside the link (e.g., text, icon).
+ */
 interface SidebarLinkProps {
   href: string;
   children: React.ReactNode;
 }
 
+/**
+ * A reusable link component for sidebars, highlighting the active link based on the current pathname.
+ *
+ * @param {SidebarLinkProps} { href, children } - Props containing the link's destination and content.
+ * @returns {JSX.Element} A list item containing a Next.js Link component.
+ */
 const SidebarLink: React.FC<SidebarLinkProps> = ({ href, children }) => {
   const pathname = usePathname();
   const isActive = pathname === href;
