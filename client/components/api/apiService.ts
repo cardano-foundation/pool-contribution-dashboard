@@ -7,7 +7,7 @@
  * @license MIT
  */
 
-import axios, { AxiosResponse } from "axios";
+import axios from "axios";
 
 import {ExchangeValue, CachedData, RewardDataArray, PoolHistory} from "@/types/types"; 
 
@@ -52,7 +52,7 @@ export async function fetchRewardDataForAllEpochs() : Promise<RewardDataArray> {
 
     } else {
 
-      let recievedRewardData: CachedData = JSON.parse(storedRewardData) as CachedData
+      const recievedRewardData: CachedData = JSON.parse(storedRewardData) as CachedData
 
       console.log(recievedRewardData.epoch)
       console.log(recievedRewardData.payload)
@@ -80,7 +80,7 @@ export async function fetchRewardDataForAllEpochs() : Promise<RewardDataArray> {
 
     }
 
-  } catch (error) {
+  } catch {
     throw new Error ("Could not load data from the Server.")
   }
 }
@@ -97,7 +97,7 @@ export async function fetchCalculatorData(): Promise<PoolHistory> {
   try {
     const calculatorData = (await axios.get<PoolHistory>(`${process.env.NEXT_PUBLIC_API_URL}/api/get-calculator-data`)).data
     return calculatorData
-  } catch (error) {
+  } catch {
     throw new Error ("Could not load calculator data from server.")
   }
 }
@@ -115,7 +115,7 @@ export async function fetchCurrentAdaDollarRate(): Promise<ExchangeValue> {
     const currentRate = (await axios.get<ExchangeValue>("https://api.coingecko.com/api/v3/simple/price?ids=cardano&vs_currencies=usd")).data
     //console.log("current exchange rate: " + currentRate.cardano.usd)
     return currentRate
-  } catch (error) {
+  } catch {
     throw new Error("Could not fetch current exchange rate.")
   }
 }

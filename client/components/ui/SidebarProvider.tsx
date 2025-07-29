@@ -159,7 +159,7 @@ export function SidebarProvider({ children, sidebarContent }: SidebarProviderPro
             <div
               className="absolute inset-0 z-[-1] transition-opacity duration-200"
               style={{
-                backgroundImage: 'url(/images/dots.svg)',
+                backgroundImage: 'url(/images/Dots.svg)',
                 backgroundRepeat: 'repeat',
                 backgroundPosition: '12px 12px',
                 opacity: 'var(--svg-opacity)'

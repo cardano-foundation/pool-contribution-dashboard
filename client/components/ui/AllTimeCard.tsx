@@ -9,8 +9,8 @@
 
 'use client';
 
-import React, { use } from 'react';
-import SimpleBarChart from '@/components/forms/simpleBarChart'
+import React from 'react';
+import SimpleBarChart from '@/components/forms/SimpleBarChart'
 import { RewardDataArray, BarChartData, ExchangeValue } from '@/types/types';
 import Big from 'big.js';
 import { useCurrency } from '@/app/context/currencyContext';
@@ -50,9 +50,7 @@ export function AllTimeCard({ title, children, className = '', height = 'h-auto'
 
   const { currency } = useCurrency();
 
-  let delegatorEpoch = data[data.length - 1]
-
-  let epochData: BarChartData[] = [];
+  const epochData: BarChartData[] = [];
 
   //Calculate the total reward for every epoch and bring it in a form, that the graph can read
   for (let i = 0; i < data.length; i++) {
@@ -71,7 +69,7 @@ export function AllTimeCard({ title, children, className = '', height = 'h-auto'
       epochData.push({ name: String(i), epoch: i, reward: addedReward.div(1000000).round(2, Big.roundHalfUp).toNumber() })
     } else if (currency === "dollar") {
 
-      let dollarReward = calculateValueWithExchangeRate(exchangeRate.cardano.usd, addedReward.div(1000000))
+      const dollarReward = calculateValueWithExchangeRate(exchangeRate.cardano.usd, addedReward.div(1000000))
 
       epochData.push({ name: String(i), epoch: i, reward: dollarReward.toNumber() })
     }

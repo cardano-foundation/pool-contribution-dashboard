@@ -1,7 +1,7 @@
 "use client"
 
 import { RewardData } from '@/types/types';
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip } from 'recharts';
 
 export default function MyChart({values}: {values: RewardData[]}) {
   return (

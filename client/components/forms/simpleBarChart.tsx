@@ -10,10 +10,10 @@
 "use client"
 
 import { BarChartData, ExchangeValue } from '@/types/types';
-import { BarChart, Bar, Rectangle, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useCurrency } from '@/app/context/currencyContext';
 import { useTheme } from '@/app/context/themeContext';
-import styles from './simpleBarChart.module.css';
+import styles from './SimpleBarChart.module.css';
 
 /**
  * Props for the SimpleBarChart component.
@@ -41,7 +41,7 @@ const formatLargeNumber = (num: number): string => {
  * @param {BarChartProps} { values, exchangeRate } - Props for the component.
  * @returns {JSX.Element} A React component rendering a bar chart.
  */
-export default function simpleBarChart({ values, exchangeRate }: BarChartProps) {
+export default function SimpleBarChart({ values }: BarChartProps) {
 
   const { currency } = useCurrency();
   const { theme } = useTheme();

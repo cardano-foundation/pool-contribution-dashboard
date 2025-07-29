@@ -11,7 +11,7 @@
 
 import { useTheme } from '@/app/context/themeContext';
 import React, { useEffect, useState } from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, LegendProps } from 'recharts';
 import styles from './simplePieChart.module.css';
 
 /**
@@ -24,6 +24,7 @@ interface PieChartData {
   name: string;
   value: number;
 }
+
 
 /**
  * Props for the SimplePieChart component.
@@ -47,7 +48,7 @@ const DEFAULT_COLORS = ['#007FFF', '#00BFFF', '#00CC99', '#33CC33', '#0099CC', '
  * @param {any} props - Props passed by Recharts to the custom legend component.
  * @returns {JSX.Element} A React component rendering a custom legend.
  */
-const CustomLegend = (props: any) => {
+const CustomLegend = (props: LegendProps) => {
   const { payload } = props;
   const { theme } = useTheme();
 
@@ -56,7 +57,7 @@ const CustomLegend = (props: any) => {
   return (
 
     <div className={`flex flex-col justify-center mt-4 text-sm ${textColorClass}`}>
-      {payload.map((entry: any, index: number) => (
+      {payload && payload.map((entry, index: number) => (
         <div key={`legend-item-${index}`} className="flex items-center">
           <div
             className="w-3 h-3 rounded-sm mr-2 flex-shrink-0"
@@ -85,20 +86,12 @@ export default function SimplePieChart({ data, title, colors = DEFAULT_COLORS }:
 
   const { theme } = useTheme();
 
-  const chartBackgroundColor = theme === "light" ? '#F2F2F2' : '#99a1af';
-
   const cursorClass = theme === "light" ? styles.cursorLight : styles.cursorDark;
-  const tickClass = theme === "light" ? styles.tickLight : styles.tickDark;
 
   //Change cursor stle depending on theme from themeContext
   const cursorStyle = {
     className: cursorClass,
     strokeWidth: 1
-  }
-
-  const tickStyle = {
-    className: tickClass,
-    fontSize: 13
   }
 
   useEffect(() => {

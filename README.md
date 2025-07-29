@@ -19,7 +19,8 @@ NEXT_PUBLIC_POOL_ID = "<PoolID to use>"
 NEXT_PUBLIC_LOCAL_STORAGE_KEY = "rewardData"
 ```
 
-Run npm start in the client directory to start.
+Run npm run build in the client directory.
+After building you can use npm start to start the app.
 
 ### Server
 
@@ -33,7 +34,7 @@ NODE_ENV= "development"
 POOL = "<PoolID to use>"
 IP = "<IP or Domain to use>"
 PORT = "5000"
-MODE = "CUSTOM_MARGIN"              # Three modes: 1. CUSTOM_MARGIN, 2. MEDIAN_MARGIN
+MODE = "CUSTOM_MARGIN"              # Two modes: 1. CUSTOM_MARGIN, 2. MEDIAN_MARGIN
 CUSTOM_MARGIN = "0.02"              # Must be between 0 and 1
 API_URL = 'https://api.koios.rest/api/v1'
 ```

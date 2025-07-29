@@ -9,7 +9,7 @@
 
 'use client';
 
-import React, { MouseEventHandler, useState, type ChangeEvent } from 'react';
+import React, { useState, type ChangeEvent } from 'react';
 import { ExchangeValue, PoolHistory } from "@/types/types";
 import Big from 'big.js';
 import LoadingSpinner from './LoadingSpinner';
@@ -33,7 +33,7 @@ interface CardProps {
   className?: string;
   height?: string;
   scrollable?: boolean;
-  data: { calculatorData: PoolHistory | null, calculatorLoading: boolean, calculatorError: String | null },
+  data: { calculatorData: PoolHistory | null, calculatorLoading: boolean, calculatorError: string | null },
   exchangeRate: ExchangeValue
 }
 
@@ -52,6 +52,10 @@ export function CalculatorCard({ title, children, className = '', height = 'h-au
 
   const { currency } = useCurrency();
 
+  const [input, setInput] = useState<string>("");
+  const [inputError, setInputError] = useState<string>("")
+  const [result, setResult] = useState<string>("0");
+  
   if (data.calculatorLoading) return (
     <div className={`bg-cf-gray rounded-2xl shadow-[0_14px_50px_0_rgba(3,36,67,0.1)] p-6 ${height} ${scrollClasses} ${className}`}>
       <LoadingSpinner
@@ -64,9 +68,6 @@ export function CalculatorCard({ title, children, className = '', height = 'h-au
   if (data.calculatorError) return <p>Fehler beim Laden: {data.calculatorError}</p>;
   if (!usedData) return <p>Keine Daten vorhanden</p>;
 
-  const [input, setInput] = useState<string>("");
-  const [inputError, setInputError] = useState<string>("")
-  const [result, setResult] = useState<string>("0");
 
   const validateNumberInput = (value: string, setError: React.Dispatch<React.SetStateAction<string>>): boolean => {
 
@@ -110,22 +111,22 @@ export function CalculatorCard({ title, children, className = '', height = 'h-au
       return false;
     }
 
-    let [integerPart, fractionalPart] = cleanedInput.split('.');
-    fractionalPart = fractionalPart || "";
+    const [integerPart, fractionalPart] = cleanedInput.split('.');
+    const finalFractionalPart = fractionalPart || "";
 
-    if (fractionalPart.length > 6) {
+    if (finalFractionalPart.length > 6) {
       setError('More than 6 decimals')
       return false;
     }
 
-    let paddedFractionalPart = fractionalPart.padEnd(6, '0');
+    const paddedFractionalPart = finalFractionalPart.padEnd(6, '0');
 
-    let lovelaceString = integerPart + paddedFractionalPart;
+    const lovelaceString = integerPart + paddedFractionalPart;
 
     let bigNum: Big;
     try {
       bigNum = new Big(lovelaceString);
-    } catch (e) {
+    } catch {
       setError('Internal conversion error');
       return false;
     }
@@ -167,21 +168,19 @@ export function CalculatorCard({ title, children, className = '', height = 'h-au
     validateNumberInput(value, setInputError);
   };
 
-  const handleCalculate = (event: React.MouseEvent<HTMLButtonElement>) => {
-
-    let counter = 0;
+  const handleCalculate = () => {
 
     try {
 
       //Convert input to lovelace depending on the input (not ., how many spaces after . (fill with zeros), etc.)
-      let cleanedInput = input.trim();
+      const cleanedInput = input.trim();
 
-      let [integerPart, fractionalPart] = cleanedInput.split('.');
-      fractionalPart = fractionalPart || "";
+      const [integerPart, fractionalPart] = cleanedInput.split('.');
+      const finalFractionalPart = fractionalPart || "";
 
-      let paddedFractionalPart = fractionalPart.padEnd(6, '0');
+      const paddedFractionalPart = finalFractionalPart.padEnd(6, '0');
 
-      let lovelaceString = integerPart + paddedFractionalPart;
+      const lovelaceString = integerPart + paddedFractionalPart;
 
       const delegation = Big(lovelaceString);
       //console.log("Delegation is: " + delegation.toString())
@@ -344,11 +343,11 @@ export function CalculatorCard({ title, children, className = '', height = 'h-au
       //console.log("Real pool reward: " + realPoolReward.toString())
 
       //________________Calculate Pool Saturation______________
-      const poolSaturationLimit = adaInCirculation.div(optimalPoolCount).round(0, 1);
+      //const poolSaturationLimit = adaInCirculation.div(optimalPoolCount).round(0, 1);
 
       //console.log("Pool Saturation Limit is: " + poolSaturationLimit.toString() + " lvl")
 
-      const poolSaturation = (newPoolStake.div(poolSaturationLimit)).times(Big(100)).round(2, 1)
+      //const poolSaturation = (newPoolStake.div(poolSaturationLimit)).times(Big(100)).round(2, 1)
 
       //console.log("Pool is saturated to " + poolSaturation.toString() + "%.")
 
@@ -357,14 +356,14 @@ export function CalculatorCard({ title, children, className = '', height = 'h-au
         //If pool rewards are enough for delegator rewards
       } else {
 
-        let m1 = realPoolReward.minus(poolFixedCost);
+        const m1 = realPoolReward.minus(poolFixedCost);
 
         //console.log("New Pool Stake" + newPoolStake.toString())
 
-        let m2 = (Big(1).minus(Big(usedData.margin)));
-        let div1 = (newPoolStake.div(adaInCirculation));
-        let div2 = (delegation.div(adaInCirculation));
-        let m3 = (div2.div(div1));
+        const m2 = (Big(1).minus(Big(usedData.margin)));
+        const div1 = (newPoolStake.div(adaInCirculation));
+        const div2 = (delegation.div(adaInCirculation));
+        const m3 = (div2.div(div1));
 
         let reward = (m1.times(m2)).times(m3);
 
@@ -399,7 +398,7 @@ export function CalculatorCard({ title, children, className = '', height = 'h-au
     } catch (error) {
       if (error instanceof Error) {
         // If it's an instance of the built-in Error class
-        console.error("Caught an Error object:", error.message + " " + counter);
+        console.error("Caught an Error object:", error.message + " ");
       } else if (typeof error === 'string') {
         // If it's a string
         console.error("Caught a string error:", error);

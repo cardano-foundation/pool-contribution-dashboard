@@ -55,7 +55,7 @@ export function OverviewCard({ title, children, className = '', height = 'h-auto
 
   let addedStake = Big(0);
 
-  let allDelegators = data[data.length - 1].length
+  const allDelegators = data[data.length - 1].length
 
 
   if (data.length >= 6) {

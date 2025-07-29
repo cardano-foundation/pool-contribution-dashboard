@@ -9,7 +9,7 @@
 
 'use client';
 
-import { ExchangeValue, RewardData, RewardDataArray } from '@/types/types';
+import { ExchangeValue, RewardDataArray } from '@/types/types';
 import React, { useState, useMemo, useEffect } from 'react';
 import Big from 'big.js';
 import Table from '@/components/ui/table';
@@ -87,8 +87,8 @@ export default function PaginatedDelegatorTableCard({
         currentEpochItems.sort((a, b) => {
             let comparison = 0;
 
-            const valA = (a as any)[sortBy];
-            const valB = (b as any)[sortBy];
+            const valA = (a)[sortBy];
+            const valB = (b)[sortBy];
 
             const valueA = new Big(valA);
             const valueB = new Big(valB);

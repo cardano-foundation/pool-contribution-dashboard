@@ -9,7 +9,7 @@
 
 'use client';
 
-import React, { useState, useEffect, ReactNode } from 'react';
+import React, { useState, ReactNode } from 'react';
 import { CurrencyContext, CurrencyContextType } from '@/app/context/currencyContext';
 
 /**

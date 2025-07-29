@@ -69,7 +69,7 @@ export function calculateRewards(epochParams: EpochParams, poolHistory: PoolHist
     //Calculating the rewards for each delegator
     for (const delegator of delegatorStake) {
 
-        let reward = calculateReward(poolReward, fixedCost, margin, poolStake, adaInCirculation, Big(delegator.amount));
+        const reward = calculateReward(poolReward, fixedCost, margin, poolStake, adaInCirculation, Big(delegator.amount));
 
         delegatorRewards.push({address: delegator.stake_address, stake: Big(delegator.amount), reward: reward.round(0, 0)});
     }
@@ -118,7 +118,7 @@ export function calculateRewardForOneDelegator (epochParams: EpochParams, poolHi
 
             //console.log("stake " + delegatorStake[i].amount);
 
-            let reward = calculateReward(poolReward, fixedCost, margin, poolStake, adaInCirculation, Big(delegatorStake[i].amount));
+            const reward = calculateReward(poolReward, fixedCost, margin, poolStake, adaInCirculation, Big(delegatorStake[i].amount));
 
             //console.log("reward " + reward)
             return ({address: delegatorAddress, stake: Big(delegatorStake[i].amount), reward: reward})
@@ -131,15 +131,6 @@ export function calculateRewardForOneDelegator (epochParams: EpochParams, poolHi
 
 }
 
-//Sets the . for better readability in ada/lovelace
-function lovelaceToAda (lovelace: Big): Big {
-    let ada: string = lovelace.toString();
-    if (ada.length > 6) {
-        ada = ada.substring(0, ada.length - 6) + "." + ada.substring(ada.length - 6);
-    }
-    return Big(ada);
-}
-
 export function roundToAda (lovelace: Big): Big {
     let ada: string = lovelace.toString();
     if (ada.length > 6) {
@@ -149,19 +140,19 @@ export function roundToAda (lovelace: Big): Big {
 }
 
 export function bigToFloat(lovelace: Big): number {
-    let intPart = Math.floor(lovelace.toNumber() / 1_000_000);
-    let mantissaPart = lovelace.toNumber() % 1_000_000;
+    const intPart = Math.floor(lovelace.toNumber() / 1_000_000);
+    const mantissaPart = lovelace.toNumber() % 1_000_000;
 
     return Number(`${intPart}.${mantissaPart.toString().padStart(6, '0')}`);
 }
 
 function calculateReward (poolReward: Big, fixedCost: Big, margin: Big, poolStake: Big, adaInCirculation: Big, delegatorStake: Big): Big {
-    let m1 = poolReward.minus(fixedCost);
-    let m2 = (Big(1).minus(margin));
-    let div1 = (poolStake.div(adaInCirculation));
-    let div2 = (Big(delegatorStake).div(adaInCirculation));
-    let m3 = (div2.div(div1));
+    const m1 = poolReward.minus(fixedCost);
+    const m2 = (Big(1).minus(margin));
+    const div1 = (poolStake.div(adaInCirculation));
+    const div2 = (Big(delegatorStake).div(adaInCirculation));
+    const m3 = (div2.div(div1));
 
-    let reward = (m1.times(m2)).times(m3);
+    const reward = (m1.times(m2)).times(m3);
     return reward;
 }

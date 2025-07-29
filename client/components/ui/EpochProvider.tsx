@@ -13,21 +13,6 @@ import React, { useState, useCallback } from 'react';
 import { EpochContext } from '@/app/context/epochContext'
 
 /**
- * Props for the EpochProvider component.
- * @interface EpochProviderProps
- * @property {React.ReactNode} children - The child components that will consume the epoch context.
- * @property {number} [initialEpoch=0] - The starting epoch number.
- * @property {number} [minEpoch=0] - The minimum allowed epoch number.
- * @property {number} [maxEpoch=10] - The maximum allowed epoch number.
- */
-interface EpochProviderProps {
-  children: React.ReactNode;
-  initialEpoch?: number;
-  minEpoch?: number;
-  maxEpoch?: number;
-}
-
-/**
  * Provides a context for managing and sharing the current epoch state throughout the application.
  * It allows components to access and update the current epoch, respecting defined minimum and maximum bounds.
  *

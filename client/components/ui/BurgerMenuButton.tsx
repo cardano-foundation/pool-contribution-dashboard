@@ -21,7 +21,7 @@ import { ListIcon, XIcon } from '@phosphor-icons/react'
  * @param {BurgerMenuButtonProps} { className } - Props for the component.
  * @returns {JSX.Element} A React button component for toggling a sidebar.
  */
-export function BurgerMenuButton({ className = '' }) {
+export function BurgerMenuButton() {
   const { toggleSidebar, isSidebarOpen } = useSidebar();
 
   return (

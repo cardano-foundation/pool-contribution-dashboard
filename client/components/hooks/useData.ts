@@ -9,7 +9,7 @@
 
 import { useEffect, useState } from "react";
 import { fetchRewardDataForAllEpochs, fetchCalculatorData, fetchCurrentAdaDollarRate } from "@/components/api/apiService";
-import { PoolHistory, RewardData, RewardDataArray, ExchangeValue } from "@/types/types";
+import { PoolHistory, RewardDataArray, ExchangeValue } from "@/types/types";
 
 /**
  * A custom React hook to fetch reward data for all epochs.

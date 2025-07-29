@@ -11,7 +11,7 @@
 
 import React from 'react';
 import { useCurrency } from '@/app/context/currencyContext';
-import { SunIcon, MoonIcon, CurrencyDollarIcon } from '@phosphor-icons/react';
+import { CurrencyDollarIcon } from '@phosphor-icons/react';
 
 /**
  * A button component that allows users to toggle between different currency displays.

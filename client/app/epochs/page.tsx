@@ -13,7 +13,6 @@ import { useRewardData, useExchangeRate } from "@/components/hooks/useData";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { BurgerMenuButton } from '@/components/ui/BurgerMenuButton';
 import { ThemeSwitcherButton } from "@/components/ui/ThemeSwitcherButton";
-import { CurrencySwitcherButton } from '@/components/ui/CurrencySwitcherButton'
 import { EpochProvider } from '@/components/ui/EpochProvider';
 import EpochControls from '@/components/ui/EpochControls'
 import { EpochCounter } from "@/components/ui/EpochCounter";

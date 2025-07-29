@@ -9,13 +9,11 @@
 
 'use client';
 
-import { ExchangeValue, RewardDataArray } from '@/types/types';
+import { RewardDataArray } from '@/types/types';
 import React from 'react';
 import Big from 'big.js';
-import { useCurrency } from '@/app/context/currencyContext'
-import { calculateValueWithExchangeRate } from '../logic/currencyCalculator';
 import { useEpoch } from '@/app/context/epochContext';
-import SimplePieChart from '../forms/simplePieChart';
+import SimplePieChart from '../forms/SimplePieChart';
 
 /**
  * Props for the EpochOverviewCard component.
@@ -47,10 +45,9 @@ interface CardProps {
 export function EpochOverviewCard({ title, children, className = '', height = 'h-auto', scrollable = false, data }: CardProps) {
   const scrollClasses = scrollable ? 'overflow-y-auto' : '';
 
-  const { currency } = useCurrency();
   const {currentEpoch} = useEpoch();
 
-  let pieData = [
+  const pieData = [
     { name: '< 100 ₳', value: 0 },
     { name: '100 - 1k ₳', value: 0 },
     { name: '1k - 3k ₳', value: 0 },

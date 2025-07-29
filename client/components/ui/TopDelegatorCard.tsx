@@ -50,7 +50,7 @@ export function TopDelegatorCard({ title, children, className = '', height = 'h-
 
   const topItems: RewardData[] = [];
 
-  let bestOf = 5;
+  const bestOf = 5;
 
   for (let i = 0; i < lastEpoch.length; i++) {
     const itemScore = Big(lastEpoch[i].stake);
