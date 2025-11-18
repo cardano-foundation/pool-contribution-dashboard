@@ -18,11 +18,7 @@ function validateAndSetEnv() {
         throw new Error('No IP set in .env')
     }
 
-    if (!process.env.KOIOS_TOKEN || process.env.KOIOS_TOKEN.trim() === '') {
-        throw new Error('No API Key set in .env')
-    }
-
-    if (!process.env.POOL || process.env.POOL.trim() === '') {
+    if (!process.env.POOL_ID || process.env.POOL_ID.trim() === '') {
         throw new Error('No Pool set in .env')
     }
 
@@ -50,7 +46,7 @@ function validateAndSetEnv() {
 
     env.IP = process.env.IP;
     env.KOIOS_TOKEN = process.env.KOIOS_TOKEN;
-    env.POOL_ID = process.env.POOL;
+    env.POOL_ID = process.env.POOL_ID;
     env.MODE = process.env.MODE;
     env.API_URL = process.env.API_URL;
     env.PORT = parseInt(process.env.PORT || '5000', 10);

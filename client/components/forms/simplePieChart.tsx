@@ -12,7 +12,7 @@
 import { useTheme } from '@/app/context/themeContext';
 import React, { useEffect, useState } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, LegendProps } from 'recharts';
-import styles from './simplePieChart.module.css';
+import styles from './SimplePieChart.module.css';
 
 /**
  * Interface for a single data point in the pie chart.
