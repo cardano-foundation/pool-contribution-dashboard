@@ -31,7 +31,7 @@ After that create a .env file in the server directory and paste the following:
 ```
 KOIOS_TOKEN = "<The HTTP Bearer Token>"
 NODE_ENV= "development"
-POOL = "<PoolID to use>"
+POOL_ID = "<PoolID to use>"
 IP = "<IP or Domain to use>"
 PORT = "5000"
 MODE = "CUSTOM_MARGIN"              # Two modes: 1. CUSTOM_MARGIN, 2. MEDIAN_MARGIN
