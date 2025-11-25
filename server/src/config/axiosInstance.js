@@ -15,15 +15,9 @@ let headers = {
     'Content-Type': 'application/json',
 };
 
-console.log(env.KOIOS_TOKEN);
-
-console.log(env)
-
 if (env.KOIOS_TOKEN) {
     headers["Authorization"] = `Bearer ${env.KOIOS_TOKEN}`;
 }
-
-console.log(headers)
 
 /**
  * Creates an axios instance with custom URL, headers and timeout value
