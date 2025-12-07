@@ -23,8 +23,6 @@ interface SidebarProviderProps {
   sidebarContent: React.ReactNode;
 }
 
-//Tailwind w-64 for margin in desktop view
-const SIDEBAR_WIDTH_PX = 256;
 //Taiwlind 2xl for mobile breakpoint
 const DESKTOP_BREAKPOINT_PX = 1536;
 
@@ -140,7 +138,7 @@ export function SidebarProvider({ children, sidebarContent }: SidebarProviderPro
             ${disableTransition ? 'transition-none' : 'transform transition-transform duration-300 ease-in-out'}
             ${isMobileView && isSidebarOpen ? 'absolute top-0 left-0 w-full translate-x-64' : ''}
             ${isMobileView && !isSidebarOpen ? 'absolute top-0 left-0 w-full translate-x-0' : ''}
-            ${!isMobileView && isSidebarOpen ? `ml-[${SIDEBAR_WIDTH_PX}px]` : ''}
+
             ${!isMobileView && !isSidebarOpen ? 'ml-0' : ''}
           `}
         >

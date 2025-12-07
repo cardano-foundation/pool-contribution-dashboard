@@ -19,15 +19,15 @@ import {ExchangeValue, CachedData, RewardDataArray, PoolHistory} from "@/types/t
  * @returns {Promise<RewardDataArray>} A promise that resolves with the array of reward data.
  * @throws {Error} If `NEXT_PUBLIC_LOCAL_STORAGE_KEY` is not defined or if data loading from the server fails.
  */
-export async function fetchRewardDataForAllEpochs() : Promise<RewardDataArray> {
+export async function fetchRewardDataForAllEpochs(apiURL: string, localStorageKey: string) : Promise<RewardDataArray> {
   try {
 
-    if (!process.env.NEXT_PUBLIC_LOCAL_STORAGE_KEY) {
+    if (!localStorageKey) {
       throw new Error ("No value is defined for naming the local storage in .env!")
     }
 
     //Fetch epoch to check if localStorage is up to date
-    const currentEpoch = (await axios.get<string>(`${process.env.NEXT_PUBLIC_API_URL}/api/get-current-epoch`)).data
+    const currentEpoch = (await axios.get<string>(`${apiURL}/api/get-current-epoch`)).data
 
     //Try to load the reward data from local storage
     //const storedRewardData: string | null = localStorage.getItem(process.env.NEXT_PUBLIC_LOCAL_STORAGE_KEY)
@@ -36,7 +36,7 @@ export async function fetchRewardDataForAllEpochs() : Promise<RewardDataArray> {
     //If not found, fetch new
     if (storedRewardData === null) {
 
-      const rewardDataArray = (await axios.get<RewardDataArray>(`${process.env.NEXT_PUBLIC_API_URL}/api/fetch-rewards`)).data
+      const rewardDataArray = (await axios.get<RewardDataArray>(`${apiURL}/api/fetch-rewards`)).data
 
       console.log(rewardDataArray)
 
@@ -46,7 +46,7 @@ export async function fetchRewardDataForAllEpochs() : Promise<RewardDataArray> {
       }
 
       //And save it 
-      localStorage.setItem(process.env.NEXT_PUBLIC_LOCAL_STORAGE_KEY, JSON.stringify(toStore))
+      localStorage.setItem(localStorageKey, JSON.stringify(toStore))
 
       return rewardDataArray
 
@@ -60,14 +60,14 @@ export async function fetchRewardDataForAllEpochs() : Promise<RewardDataArray> {
       //If local data is not up to date anymore fetch new
       if (recievedRewardData.epoch !== currentEpoch) {
 
-        const rewardDataArray = (await axios.get<RewardDataArray>(`${process.env.NEXT_PUBLIC_API_URL}/api/fetch-rewards`)).data
+        const rewardDataArray = (await axios.get<RewardDataArray>(`${apiURL}/api/fetch-rewards`)).data
         const toStore: CachedData = {
           epoch: currentEpoch,
           payload: rewardDataArray
         }
 
         //And overwrite the old 
-        localStorage.setItem(process.env.NEXT_PUBLIC_LOCAL_STORAGE_KEY, JSON.stringify(toStore))
+        localStorage.setItem(localStorageKey, JSON.stringify(toStore))
 
         return rewardDataArray
 
@@ -93,9 +93,9 @@ export async function fetchRewardDataForAllEpochs() : Promise<RewardDataArray> {
  *
  * @todo Rename this function to be more descriptive of what "calculator data" entails.
  */
-export async function fetchCalculatorData(): Promise<PoolHistory> {
+export async function fetchCalculatorData(apiURL: string): Promise<PoolHistory> {
   try {
-    const calculatorData = (await axios.get<PoolHistory>(`${process.env.NEXT_PUBLIC_API_URL}/api/get-calculator-data`)).data
+    const calculatorData = (await axios.get<PoolHistory>(`${apiURL}/api/get-calculator-data`)).data
     return calculatorData
   } catch {
     throw new Error ("Could not load calculator data from server.")

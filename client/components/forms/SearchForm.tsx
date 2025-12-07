@@ -1,18 +1,20 @@
 "use client"
 
-import { useState } from "react";
+//Currently not used
 
+import { useState } from "react";
 import {SearchFormProps} from "@/types/types"; 
+import { useConfig } from "@/app/context/configContext";
 
 //Handles the user input for poolId, epoch and used margin to calculate the rewards.
 export default function SearchForm({onSearch} : SearchFormProps) {
+    const { poolId } = useConfig();
     const [epoch, setEpoch] = useState(428);
     const [margin, setMargin] = useState(0.03);
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        //Pool ID is hard coded in the .env now
-        const poolId = process.env.NEXT_PUBLIC_POOL_ID;
+        
         if (!poolId) {
             throw new Error('POOL_ID ist not set in .evn.local!');
         }

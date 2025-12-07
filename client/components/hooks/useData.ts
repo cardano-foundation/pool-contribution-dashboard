@@ -10,6 +10,7 @@
 import { useEffect, useState } from "react";
 import { fetchRewardDataForAllEpochs, fetchCalculatorData, fetchCurrentAdaDollarRate } from "@/components/api/apiService";
 import { PoolHistory, RewardDataArray, ExchangeValue } from "@/types/types";
+import { useConfig } from "@/app/context/configContext";
 
 /**
  * A custom React hook to fetch reward data for all epochs.
@@ -22,16 +23,23 @@ import { PoolHistory, RewardDataArray, ExchangeValue } from "@/types/types";
  * - `rewardError`: A string containing an error message if the fetch failed, otherwise `null`.
  */
 export function useRewardData() {
+
+  const { apiURL, localStorageKey } = useConfig();
+
   const [rewardData, setRewardData] = useState<RewardDataArray | null>(null);
   const [rewardError, setRewardError] = useState<string | null>(null);
   const [rewardLoading, setRewardLoading] = useState(true);
 
   useEffect(() => {
-    fetchRewardDataForAllEpochs()
+
+    //If apiURL and localStorageKey are not yet initialized
+    if (!apiURL || !localStorageKey) return;
+
+    fetchRewardDataForAllEpochs(apiURL, localStorageKey)
       .then(setRewardData)
       .catch((err) => setRewardError(err.message))
       .finally(() => setRewardLoading(false));
-  }, []);
+  }, [apiURL, localStorageKey]);
 
   return { rewardData, rewardLoading, rewardError };
 }
@@ -47,16 +55,23 @@ export function useRewardData() {
  * - `calculatorLoading`: A boolean indicating if the calculator data is currently being fetched.
  */
 export function useCalculatorData() {
+
+  const { apiURL } = useConfig();
+
   const [calculatorData, setCalculatorData] = useState<PoolHistory | null>(null);
   const [calculatorError, setCalculatorError] = useState<string | null>(null);
   const [calculatorLoading, setCalculatorLoading] = useState(true);
 
   useEffect(() => {
-    fetchCalculatorData()
+
+    //If apiURL is not yet initialized
+    if (!apiURL) return;
+
+    fetchCalculatorData(apiURL)
       .then(setCalculatorData)
       .catch((err) => setCalculatorError(err.message))
       .finally(() => setCalculatorLoading(false));
-  }, []);
+  }, [apiURL]);
 
   return { calculatorData, calculatorError, calculatorLoading };
 }

@@ -13,6 +13,7 @@ import SidebarLink from '@/components/ui/SidebarLink';
 import { SidebarProvider } from "@/components/ui/SidebarProvider";
 import { ThemeProvider } from "@/components/ui/ThemeProvider";
 import { CurrencyProvider } from "@/components/ui/CurrencyProvider";
+import { ConfigProvider } from "@/app/context/configContext";
 
 /**
  * Metadata for the entire application.
@@ -59,22 +60,24 @@ export default function RootLayout({
       </head>
       <body className="bg-cf-gray dark:bg-cf-text transition-colors duration-200">
         <ThemeProvider>
-          <SidebarProvider sidebarContent={
-            <div>
-              <h2 className="text-3xl text-cf-text dark:text-cf-gray transition-colors duration-200 mt-2 mb-6 pl-4">Dashboard</h2>
-              <nav>
-                <ul>
-                  <SidebarLink href="/">Overview</SidebarLink>
-                  <SidebarLink href="/epochs">Epochs</SidebarLink>
-                  <SidebarLink href="/delegator">Delegator</SidebarLink>
-                </ul>
-              </nav>
-            </div>
-          }>
-            <CurrencyProvider>
-              {children}
-            </CurrencyProvider>
-          </SidebarProvider>
+          <ConfigProvider>
+            <SidebarProvider sidebarContent={
+              <div className="w-full">
+                <h2 className="text-3xl text-cf-text dark:text-cf-gray transition-colors duration-200 mt-2 mb-6 pl-4">Dashboard</h2>
+                <nav>
+                  <ul>
+                    <SidebarLink href="/">Overview</SidebarLink>
+                    <SidebarLink href="/epochs">Epochs</SidebarLink>
+                    <SidebarLink href="/delegator">Delegator</SidebarLink>
+                  </ul>
+                </nav>
+              </div>
+           }>
+              <CurrencyProvider>
+                {children}
+              </CurrencyProvider>
+            </SidebarProvider>
+          </ConfigProvider>
         </ThemeProvider>
       </body>
     </html>
