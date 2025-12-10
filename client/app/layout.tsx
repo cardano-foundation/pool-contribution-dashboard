@@ -68,7 +68,6 @@ export default function RootLayout({
                   <ul>
                     <SidebarLink href="/">Overview</SidebarLink>
                     <SidebarLink href="/epochs">Epochs</SidebarLink>
-                    <SidebarLink href="/delegator">Delegator</SidebarLink>
                   </ul>
                 </nav>
               </div>
