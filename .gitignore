@@ -137,3 +137,7 @@ dist
 
 # Dont push contents of server/data
 server/data/*
+
+# macOS
+.DS_Store
+**/.DS_Store

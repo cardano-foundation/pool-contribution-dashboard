@@ -87,7 +87,7 @@ export function AllTimeCard({ title, children, className = '', height = 'h-auto'
                       p-6 ${height} ${scrollClasses} ${className}`}>
       <h3 className="text-3xl ml-2 text-cf-text dark:text-cf-gray transition-colors duration-200">{title}</h3>
       <p className='ml-2 mb-6 text-gray-400 text-xs'>Reward/Epoch</p>
-      <div className="text-cf-text dark:text-cf-gray transition-colors duration-200">
+      <div className="text-cf-text dark:text-cf-gray transition-colors duration-200 flex-grow flex flex-col">
         <SimpleBarChart values={epochData} exchangeRate={exchangeRate}></SimpleBarChart>
         {children}
       </div>

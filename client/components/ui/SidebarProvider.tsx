@@ -24,7 +24,7 @@ interface SidebarProviderProps {
 }
 
 //Taiwlind 2xl for mobile breakpoint
-const DESKTOP_BREAKPOINT_PX = 1536;
+const DESKTOP_BREAKPOINT_PX = 1280;
 
 
 /**
@@ -163,7 +163,7 @@ export function SidebarProvider({ children, sidebarContent }: SidebarProviderPro
                 opacity: 'var(--svg-opacity)'
               }} />
             {/* Div for content from page.tsx */}
-            <div className="relative w-full h-full p-4 pt-6 2xl:p-10 flex flex-col overflow-auto">
+            <div className="relative w-full h-full flex flex-col overflow-auto p-6">
               {children}
             </div>
           </div>

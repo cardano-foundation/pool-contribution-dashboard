@@ -50,7 +50,7 @@ export default function Home() {
     <div className="flex flex-col h-full">
       <div className="mb-6 flex items-center">
         <BurgerMenuButton></BurgerMenuButton>
-        <h1 className="text-3xl text-cf-text dark:text-cf-gray transition-colors duration-200 flex items-center justify-center ml-3 2xl:ml-0">Overview</h1>
+        <h1 className="text-3xl text-cf-text dark:text-cf-gray transition-colors duration-200 flex items-center justify-center ml-3 xl:ml-0">Overview</h1>
         <div className="ml-auto">
         </div>
         <div className="ml-auto">
@@ -60,21 +60,45 @@ export default function Home() {
           </div>
         </div>
       </div>
-      <div className="grid grid-cols-1 gap-6 pb-8 2xl:pb-0 2xl:grid-cols-3 flex-grow">
+      <div className="grid grid-cols-1 gap-6 pb-6 xl:grid-cols-3 flex-grow">
 
-        <OverviewCard title="Rewards" className="2xl:col-span-1" data={rewardData} exchangeRate={rate}>
+        <OverviewCard 
+          title="Rewards" 
+          className="xl:col-span-1" 
+          data={rewardData} 
+          exchangeRate={rate}
+        >
           {null}
         </OverviewCard>
 
-        <AllTimeCard title="All time" scrollable={true} className="2xl:col-span-2" data={rewardData} exchangeRate={rate}>
+        <AllTimeCard 
+          title="All time" 
+          scrollable={true} 
+          className="xl:col-span-2" 
+          data={rewardData} 
+          exchangeRate={rate}
+        >
           {null}
         </AllTimeCard>
 
-        <CalculatorCard title="Reward Calculator" className="2xl:col-span-1" height="min-h-90" data={calculatorCollection} exchangeRate={rate}>
+        <CalculatorCard 
+          title="Reward Calculator" 
+          className="xl:col-span-1" 
+          height="min-h-90"
+          data={calculatorCollection} 
+          exchangeRate={rate}
+        >
           {null}
         </CalculatorCard>
 
-        <TopDelegatorCard title="Top 5 Delegator" scrollable={true} className="2xl:col-span-2" height="min-h-90" data={rewardData} exchangeRate={rate}>
+        <TopDelegatorCard 
+          title="Top 5 Delegator" 
+          scrollable={true} 
+          className="xl:col-span-2"
+          height="min-h-90"
+          data={rewardData} 
+          exchangeRate={rate}
+        >
           {null}
         </TopDelegatorCard>
 

@@ -39,7 +39,7 @@ export function BurgerMenuButton() {
         flex items-center justify-center
         self-start
         focus:outline-none
-        2xl:hidden
+        xl:hidden
       "
       aria-label="Open Sidebar"
     >
