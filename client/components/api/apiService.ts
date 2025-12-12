@@ -90,7 +90,7 @@ export async function fetchRewardDataForAllEpochs(apiURL: string, localStorageKe
           localStorage.setItem(localStorageKey, JSON.stringify(toStore))
 
         } catch (e) {
-          console.warn("Recieved data is to big for local storage. Skipping caching for now.", storageError);
+          console.warn("Recieved data is to big for local storage. Skipping caching for now.", e);
         }
 
         return rewardDataArray;
@@ -137,11 +137,11 @@ export async function fetchCurrentAdaDollarRate(): Promise<ExchangeValue> {
     const currentRate = (await axios.get<ExchangeValue>("https://api.coingecko.com/api/v3/simple/price?ids=cardano&vs_currencies=usd")).data
     //console.log("current exchange rate: " + currentRate.cardano.usd)
     return currentRate
-  } catch {
-    console.warn("Could not fetch current exchange rate from CoinGecko (Rate Limit or Offline). Using fallback value.", error);
+  } catch (e){
+    console.warn("Could not fetch current exchange rate from CoinGecko (Rate Limit or Offline). Using fallback value.", e);
     return {
       cardano: {
-        usd: 1
+        usd: "1"
       }
     };
   }

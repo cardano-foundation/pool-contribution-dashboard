@@ -146,11 +146,12 @@ export function SidebarProvider({ children, sidebarContent }: SidebarProviderPro
           <div
             className={`
               relative
-              flex-1 min-h-screen bg-cf-gray dark:bg-cf-text z-[0] 
+              flex-1 h-dvh bg-cf-gray dark:bg-cf-text z-[0] 
               transition-colors duration-200 
               shadow-[-4px_0_80px_0px_rgba(3,36,67,0.24)]
               dark:shadow-[-4px_0_80px_0px_rgba(23,23,23,0.24)]
               rounded-l-3xl
+              overflow-hidden
             `}
           >
             {/* Special class only for the dots in the Background */}
@@ -163,7 +164,7 @@ export function SidebarProvider({ children, sidebarContent }: SidebarProviderPro
                 opacity: 'var(--svg-opacity)'
               }} />
             {/* Div for content from page.tsx */}
-            <div className="relative w-full h-full flex flex-col overflow-auto p-6">
+            <div className="relative w-full h-full overflow-hidden">
               {children}
             </div>
           </div>

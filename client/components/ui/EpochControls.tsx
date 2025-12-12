@@ -24,34 +24,33 @@ export function EpochControls() {
     const { currentEpoch, goToNextEpoch, goToPreviousEpoch, goToEpoch, minEpoch, maxEpoch } = useEpoch();
 
     return (
-        <div className='sticky bottom-0 left-0 right-0 z-50 flex justify-center w-full'>
-            <div className="flex-grow p-2 bg-cf-gray dark:bg-cf-text shadow-[0_8px_26px_0px_rgba(3,36,67,0.1)] dark:shadow-[0_4px_14px_0px_rgba(23,23,23,0.24)] rounded-2xl max-w-[600px]">
-                <div className="flex items-center w-full space-x-4">
-                    <button
-                        onClick={goToPreviousEpoch}
-                        disabled={currentEpoch === minEpoch}
-                        className="px-2 py-2 bg-cf-gray dark:bg-cf-text text-cf-text dark:text-cf-gray rounded-lg shadow-[0_8px_26px_0px_rgba(3,36,67,0.1)] dark:shadow-[0_4px_14px_0px_rgba(23,23,23,0.24)] hover:bg-gray-200 dark:hover:bg-[#303030] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
-                    >
-                        <ArrowLeftIcon size={20} weight='bold' />
-                    </button>
-                    <input
-                        type="range"
-                        min={minEpoch}
-                        max={maxEpoch}
-                        value={currentEpoch}
-                        onChange={(e) => goToEpoch(Number(e.target.value))}
-                        className="flex-grow h-2 bg-gray-200 text-cf-text dark:bg-gray-600 dark:text-cf-gray rounded-lg appearance-none cursor-pointer range-lg"
-                    />
-                    <button
-                        onClick={goToNextEpoch}
-                        disabled={currentEpoch === maxEpoch}
-                        className="px-2 py-2 bg-cf-gray dark:bg-cf-text text-cf-text dark:text-cf-gray rounded-lg shadow-[0_8px_26px_0px_rgba(3,36,67,0.1)] dark:shadow-[0_4px_14px_0px_rgba(23,23,23,0.24)] hover:bg-gray-200 dark:hover:bg-[#303030] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
-                    >
-                        <ArrowRightIcon size={20} weight='bold' />
-                    </button>
-                </div>
+        <div className="flex items-center justify-center w-full gap-3">
+            <button
+                onClick={goToPreviousEpoch}
+                disabled={currentEpoch === minEpoch}
+                className="bg-cf-gray dark:bg-cf-text shadow-[0_8px_26px_0px_rgba(3,36,67,0.1)] dark:shadow-[0_4px_14px_0px_rgba(23,23,23,0.24)] w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-200 dark:hover:bg-[#303030] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 text-cf-text dark:text-cf-gray"
+                aria-label="Previous Epoch"
+            >
+                <ArrowLeftIcon size={20} weight='bold' />
+            </button>
+            <div className="bg-cf-gray dark:bg-cf-text shadow-[0_8px_26px_0px_rgba(3,36,67,0.1)] dark:shadow-[0_4px_14px_0px_rgba(23,23,23,0.24)] flex-grow h-10 flex items-center px-4 rounded-lg">
+                <input
+                    type="range"
+                    min={minEpoch}
+                    max={maxEpoch}
+                    value={currentEpoch}
+                    onChange={(e) => goToEpoch(Number(e.target.value))}
+                    className="w-full h-2 bg-gray-200 text-cf-text dark:bg-gray-600 dark:text-cf-gray rounded-lg appearance-none cursor-pointer range-lg"
+                />
             </div>
-
+            <button
+                onClick={goToNextEpoch}
+                disabled={currentEpoch === maxEpoch}
+                className="bg-cf-gray dark:bg-cf-text shadow-[0_8px_26px_0px_rgba(3,36,67,0.1)] dark:shadow-[0_4px_14px_0px_rgba(23,23,23,0.24)] w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-200 dark:hover:bg-[#303030] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 text-cf-text dark:text-cf-gray"
+                aria-label="Next Epoch"
+            >
+                <ArrowRightIcon size={20} weight='bold' />
+            </button>
         </div>
     );
 };

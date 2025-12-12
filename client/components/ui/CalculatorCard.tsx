@@ -197,7 +197,6 @@ export function CalculatorCard({ title, children, className = '', height = 'h-au
 
       //poolFixedCost
       const poolFixedCost = Big(usedData.fixed_cost)
-      //oben: kommt alles aus der poolHistory
 
       //poolPledge
       const poolPledge = Big(usedData.pledge)
@@ -416,8 +415,8 @@ export function CalculatorCard({ title, children, className = '', height = 'h-au
 
   return (
     <div className={`bg-cf-gray dark:bg-cf-text transition-colors duration-200 rounded-2xl 
-                      shadow-[0_14px_50px_0_rgba(3,36,67,0.1)]
-                      dark:shadow-[0_14px_50px_0px_rgba(23,23,23,0.24)]
+                      shadow-[0_6px_20px_0_rgba(3,36,67,0.1)]
+                      dark:shadow-[0_6px_20px_0px_rgba(23,23,23,0.24)]
                       p-6 ${height} ${scrollClasses} ${className}`}>
       <h3 className="text-3xl text-cf-text dark:text-cf-gray transition-colors duration-200">{title}</h3>
       <p className='mb-6 text-gray-400 text-xs'>Uses data from 2 epochs ago</p>

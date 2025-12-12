@@ -11,7 +11,7 @@
 
 import { useTheme } from '@/app/context/themeContext';
 import React, { useEffect, useState } from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, LegendProps } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, LegendProps, TooltipProps } from 'recharts';
 import styles from './SimplePieChart.module.css';
 
 /**
@@ -39,7 +39,17 @@ interface PieChartComponentProps {
   colors?: string[];
 }
 
-const DEFAULT_COLORS = ['#007FFF', '#00BFFF', '#00CC99', '#33CC33', '#0099CC', '#66CDAA', '#4682B4', '#20B2AA', '#006666'];
+const DEFAULT_COLORS = [
+  '#3ea44c',
+  '#33A970',
+  '#28AE95',
+  '#1DB3BA',
+  '#12B8DF',
+  '#07BDFF',
+  '#05AAFF',
+  '#0297FF',
+  '#0084FF',
+];
 
 /**
  * Custom legend component for the Recharts PieChart.
@@ -73,6 +83,42 @@ const CustomLegend = (props: LegendProps) => {
 };
 
 /**
+ * 
+ */
+const CustomTooltip = ({ active, payload }: TooltipProps<number, string>) => {
+  if (active && payload && payload.length) {
+    const data = payload[0];
+
+    const color = data.payload.fill;
+
+    return (
+      <div style={{
+        backgroundColor: 'var(--recharts-tooltip-bg)',
+        borderRadius: '0.75rem',
+        border: '0px',
+        padding: '0.75rem',
+        boxShadow: '0 8px 10px rgba(3,36,67,0.2)'
+      }}>
+        <div className="flex flex-col gap-1">
+          {/* Header */}
+          <div className="flex items-center gap-2">
+            <span className="w-3 h-3 rounded-sm inline-block" style={{ backgroundColor: color }}></span>
+            <span style={{ color: 'var(--recharts-tooltip-text-title)', fontSize: 14, fontWeight: 500 }}>
+              {data.name}
+            </span>
+          </div>
+          {/* Body */}
+          <span className="ml-5" style={{ color: 'var(--recharts-tooltip-text-title)', fontSize: 14, fontWeight: 'bold' }}>
+            {data.value}
+          </span>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
+/**
  * A responsive pie chart component using Recharts, customizable with data, title, and colors.
  * It also adapts its appearance (e.g., tooltip cursor, tick styles) based on the application's theme.
  * Handles client-side rendering to prevent hydration mismatches.
@@ -98,6 +144,13 @@ export default function SimplePieChart({ data, title, colors = DEFAULT_COLORS }:
     setIsClient(true);
   }, []);
 
+  const chartData = React.useMemo(() => {
+    if (!data) return [];
+    return data.map((entry, index) => ({
+      ...entry,
+      fill: colors[index % colors.length]
+    }));
+  }, [data, colors]);
 
   if (!data || data.length === 0) {
     return (
@@ -125,36 +178,24 @@ export default function SimplePieChart({ data, title, colors = DEFAULT_COLORS }:
         <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }} >
           <Pie
             isAnimationActive={false}
-            data={data}
+            data={chartData}
             cx="50%"
             cy="50%"
-            outerRadius={80}
+            innerRadius="60%"
+            outerRadius="90%"
+            paddingAngle={5}
+            cornerRadius={4}
             dataKey="value"
             nameKey="name"
             stroke="none"
           >
-            {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+            {chartData.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={entry.fill} />
             ))}
           </Pie>
           <Tooltip
             cursor={cursorStyle}
-            contentStyle={{
-              backgroundColor: 'var(--recharts-tooltip-bg)',
-              borderRadius: '0.75rem',
-              border: '0px',
-              padding: '0.75rem',
-              boxShadow: '0 8px 10px rgba(3,36,67,0.2)'
-            }}
-            itemStyle={{ color: 'var(--recharts-tooltip-text-title)', fontWeight: 'medium', fontSize: 14 }}
-            formatter={(value: string | number) => {
-
-              return (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  <span style={{ fontWeight: 'bold' }}>{value}</span>
-                </div>
-              );
-            }}
+            content={<CustomTooltip />}
           />
 
           <Legend

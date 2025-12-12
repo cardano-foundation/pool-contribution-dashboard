@@ -10,7 +10,7 @@
 'use client';
 
 import { ExchangeValue, RewardDataArray } from '@/types/types';
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import Big from 'big.js';
 import Table from '@/components/ui/table';
 import { useEpoch } from '@/app/context/epochContext';
@@ -65,7 +65,7 @@ export default function PaginatedDelegatorTableCard({
     scrollable = false,
     data,
     exchangeRate,
-    itemsPerPage = 12,
+    itemsPerPage = 10,
     sortBy = 'reward',
     sortOrder = 'desc',
 }: CardProps) {
@@ -73,7 +73,41 @@ export default function PaginatedDelegatorTableCard({
 
     const [currentPage, setCurrentPage] = useState(1);
 
+    const [dynamicItemsPerPage, setDynamicItemsPerPage] = useState(itemsPerPage);
+
+    const cardRef = useRef<HTMLDivElement>(null);
+
     const { currentEpoch } = useEpoch();
+
+    useEffect(() => {
+        if (!cardRef.current) return;
+
+        const calculateItems = () => {
+            if (cardRef.current) {
+                const containerHeight = cardRef.current.clientHeight;
+                
+                const fixedContentHeight = 210; 
+                
+                const rowHeight = 40;
+
+                const availableSpace = containerHeight - fixedContentHeight;
+                
+                const calculatedItems = Math.floor(availableSpace / rowHeight);
+                
+                setDynamicItemsPerPage(Math.max(10, calculatedItems));
+            }
+        };
+
+        calculateItems();
+
+        const observer = new ResizeObserver(() => {
+            calculateItems();
+        });
+
+        observer.observe(cardRef.current);
+
+        return () => observer.disconnect();
+    }, []);
 
     const sortedData = useMemo(() => {
 
@@ -110,13 +144,13 @@ export default function PaginatedDelegatorTableCard({
     }, [currentEpoch]);
 
     const totalItems = sortedData.length;
-    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    const totalPages = Math.ceil(totalItems / dynamicItemsPerPage);
 
     const currentItems = useMemo(() => {
-        const startIndex = (currentPage - 1) * itemsPerPage;
-        const endIndex = startIndex + itemsPerPage;
+        const startIndex = (currentPage - 1) * dynamicItemsPerPage;
+        const endIndex = startIndex + dynamicItemsPerPage;
         return sortedData.slice(startIndex, endIndex);
-    }, [currentPage, itemsPerPage, sortedData]);
+    }, [currentPage, dynamicItemsPerPage, sortedData]);
 
     const goToNextPage = () => {
         setCurrentPage((prev) => Math.min(prev + 1, totalPages));
@@ -127,9 +161,11 @@ export default function PaginatedDelegatorTableCard({
     };
 
     return (
-        <div className={`bg-cf-gray dark:bg-cf-text transition-colors duration-200 rounded-2xl
-                     shadow-[0_14px_50px_0_rgba(3,36,67,0.1)]
-                     dark:shadow-[0_14px_50px_0px_rgba(23,23,23,0.24)]
+        <div 
+            ref={cardRef}
+            className={`bg-cf-gray dark:bg-cf-text transition-colors duration-200 rounded-2xl
+                     shadow-[0_6px_20px_0_rgba(3,36,67,0.1)]
+                     dark:shadow-[0_6px_20px_0px_rgba(23,23,23,0.24)]
                      p-6 ${height} ${scrollClasses} ${className}`}>
             <h3 className="text-3xl ml-2 text-cf-text dark:text-cf-gray transition-colors duration-200">{title}</h3>
 

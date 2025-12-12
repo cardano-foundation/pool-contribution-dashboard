@@ -72,7 +72,6 @@ async function calculatePoolRewards(medians, currentEpoch, poolHistoryOrderedByE
         throw new Error('medians is not set.')
     } else {
         console.log("Using a " + typeof medians + " to calculate the rewards.")
-        //Logisch falsch
         if (!(Array.isArray(medians) || (typeof medians === 'number' && !isNaN(medians)))) {
 
             throw new Error('Given type for medians was neither an array nor a number.')

@@ -34,7 +34,7 @@ export default function Home() {
 
   //Fetch exchangeRate
 
-  const {rate, rateError, rateLoading} = useExchangeRate();
+  const { rate, rateError, rateLoading } = useExchangeRate();
 
   if (rewardLoading || rateLoading) return <LoadingSpinner
     bigCircleDiameter={100}
@@ -47,61 +47,86 @@ export default function Home() {
   if (!rate) return <p>No exchange rate data recieved</p>
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="mb-6 flex items-center">
-        <BurgerMenuButton></BurgerMenuButton>
-        <h1 className="text-3xl text-cf-text dark:text-cf-gray transition-colors duration-200 flex items-center justify-center ml-3 xl:ml-0">Overview</h1>
-        <div className="ml-auto">
-        </div>
-        <div className="ml-auto">
-          <div className="flex flex-row gap-3">
-            <CurrencySwitcherButton />
-            <ThemeSwitcherButton />
+    <div className="flex flex-col h-[100dvh] overflow-hidden">
+      <div className="relative z-30 flex-shrink-0">
+
+        {/* Covers the Cards */}
+        <div className="absolute inset-0 bg-cf-gray dark:bg-cf-text transition-colors duration-200"/>
+
+        {/* Points in the Button Bar */}
+        <div
+          className="absolute inset-0 transition-opacity duration-200 z-10"
+          style={{
+            backgroundImage: 'url(/images/Dots.svg)',
+            backgroundRepeat: 'repeat',
+            backgroundPosition: '12px 12px',
+            opacity: 'var(--svg-opacity)'
+          }}
+        />
+
+        {/* Actual Buttons */}
+        <div className="relative z-20 flex items-center px-4 md:px-6 xl:px-8 pt-4 xl:pt-6 mb-4">
+          <BurgerMenuButton></BurgerMenuButton>
+          <h1 className="text-3xl text-cf-text dark:text-cf-gray transition-colors duration-200 flex items-center justify-center ml-3 xl:ml-0">Overview</h1>
+          <div className="ml-auto">
+          </div>
+          <div className="ml-auto">
+            <div className="flex flex-row gap-3">
+              <CurrencySwitcherButton />
+              <ThemeSwitcherButton />
+            </div>
           </div>
         </div>
       </div>
-      <div className="grid grid-cols-1 gap-6 pb-6 xl:grid-cols-3 flex-grow">
 
-        <OverviewCard 
-          title="Rewards" 
-          className="xl:col-span-1" 
-          data={rewardData} 
-          exchangeRate={rate}
-        >
-          {null}
-        </OverviewCard>
+      <div className="flex-grow overflow-y-auto overscroll-contain custom-scrollbar">
+        
+        <div className="min-h-full flex flex-col px-4 md:px-6 xl:px-8 pt-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] xl:pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
 
-        <AllTimeCard 
-          title="All time" 
-          scrollable={true} 
-          className="xl:col-span-2" 
-          data={rewardData} 
-          exchangeRate={rate}
-        >
-          {null}
-        </AllTimeCard>
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-3 xl:grid-rows-[minmax(0,1fr)_minmax(0,1fr)] flex-grow h-auto xl:min-h-[600px]">
 
-        <CalculatorCard 
-          title="Reward Calculator" 
-          className="xl:col-span-1" 
-          height="min-h-90"
-          data={calculatorCollection} 
-          exchangeRate={rate}
-        >
-          {null}
-        </CalculatorCard>
+            <OverviewCard
+              title="Rewards"
+              className="xl:col-span-1"
+              height="h-auto xl:h-full"
+              data={rewardData}
+              exchangeRate={rate}
+            >
+              {null}
+            </OverviewCard>
 
-        <TopDelegatorCard 
-          title="Top 5 Delegator" 
-          scrollable={true} 
-          className="xl:col-span-2"
-          height="min-h-90"
-          data={rewardData} 
-          exchangeRate={rate}
-        >
-          {null}
-        </TopDelegatorCard>
+            <AllTimeCard
+              title="All time"
+              className="xl:col-span-2"
+              height="h-auto xl:h-full"
+              data={rewardData}
+              exchangeRate={rate}
+            >
+              {null}
+            </AllTimeCard>
 
+            <CalculatorCard
+              title="Reward Calculator"
+              className="xl:col-span-1"
+              height="h-auto xl:h-full"
+              data={calculatorCollection}
+              exchangeRate={rate}
+            >
+              {null}
+            </CalculatorCard>
+
+            <TopDelegatorCard
+              title="Top 5 Delegator"
+              scrollable={true}
+              className="xl:col-span-2"
+              height="h-auto xl:h-full"
+              data={rewardData}
+              exchangeRate={rate}
+            >
+              {null}
+            </TopDelegatorCard>
+          </div>
+        </div>
       </div>
     </div>
   );
